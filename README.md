@@ -4,6 +4,7 @@ Uses the PHP Framework Laravel. To get started you should probably run:
     touch application/config/local/application.php
   
 Inside the new file, add this:
+
     <?php
     return array(
 
