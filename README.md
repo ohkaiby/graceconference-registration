@@ -1,5 +1,6 @@
 # graceconference-registration #
 Uses the PHP Framework Laravel. To get started you should probably run:
+
     mkdir application/config/local
     touch application/config/local/application.php
   
