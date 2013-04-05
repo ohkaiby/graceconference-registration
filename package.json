@@ -1,0 +1,26 @@
+{
+  "name": "grace-conference-registration",
+  "preferGlobal": true,
+  "version": "0.1.0",
+  "author": {
+    "name": "Kai Yao <ohkaiby@gmail.com>"
+  },
+  "description": "Grace Conference 2013 Registration Form",
+  "contributors": [
+    {
+      "name": "Kai Yao",
+      "email": "ohkaiby@gmail.com"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-less": "~0.5.0",
+    "grunt-contrib-concat": "~0.1.3",
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-contrib-jshint": "~0.4.0",
+    "grunt-contrib-watch": "~0.3.1"
+  },
+  "bundledDependencies": [],
+  "license": "MIT"
+}
