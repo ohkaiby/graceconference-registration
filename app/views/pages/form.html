@@ -2,21 +2,51 @@
 <html>
 <head>
 	<title>Grace Conference 2013 Registration Form [IN PROGRESS]</title>
-	<link href="//fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet" type="text/css">
+	<link href="//fonts.googleapis.com/css?family=Open+Sans:400,600,700|Alex+Brush" rel="stylesheet" type="text/css">
 	<link href="/app/css/app.min.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-	asdf
+	<div class="container">
+		<section class="form">
+			<h1>Grace Conference 2013: The Beloved</h1>
+			<div class="form-container"></div>
+		</section>
+		<aside class="answers">
+		</aside>
+	</div>
 	<script src="/app/js/libraries/modernizr.js"></script>
 	<script>
+	var gc = {
+			app : {},
+			views : {},
+			models : {},
+			collections : {}
+		},
+		tester = undefined;
+
 	yepnope( [
 		{
 			load : [
-				'/app/js/compiled/libraries.min.js',
-				'/app/js/compiled/app.min.js'
+				'/app/js/compiled/libraries.min.js'
 			],
 			complete : function() {
+				gc.initQueue = $.Deferred();
+				gc.init = function( func ) {
+					gc.initQueue.promise().done( func );
+				};
 
+				gc.template = function( templateName, stache ) {
+					return $( gc.templates[ templateName ].render( stache ) );
+				}
+			}
+		},
+		{
+			load : [
+				'/app/js/compiled/app.js', // .min
+				'/app/js/compiled/templates.min.js'
+			],
+			complete : function() {
+				gc.initQueue.resolve();
 			}
 		}
 	] );

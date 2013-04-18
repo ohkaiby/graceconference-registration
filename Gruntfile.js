@@ -1,10 +1,14 @@
 /*global module:false*/
+/*global require:false*/
+var path = require( 'path' );
+
 module.exports = function( grunt ) {
 	var js_library_source_files = [
 			'app/js/libraries/jquery-1.9.1.js',
 			'app/js/libraries/bootstrap.js',
 			'app/js/libraries/lodash.js',
-			'app/js/libraries/backbone.js'
+			'app/js/libraries/backbone.js',
+			'app/js/libraries/hogan.js'
 		];
 
 	// Project configuration.
@@ -24,7 +28,8 @@ module.exports = function( grunt ) {
 				},
 				files : {
 					'app/css/compiled/0-bootstrap.min.css' : 'app/css/libraries/bootstrap.css',
-					'app/css/compiled/1-app.css' : 'app/css/app/app.less'
+					'app/css/compiled/1-app.css' : 'app/css/app/app.less',
+					'app/css/compiled/2-responsive.css' : 'app/css/app/responsive.less'
 				}
 			}
 		},
@@ -89,13 +94,24 @@ module.exports = function( grunt ) {
 				src : 'app/js/app/**/*.js'
 			}
 		},
-		// qunit: {
-		//files: ['test/**/*.html']
-		// },
+		hogan : {
+			raw : {
+				options : {
+					namespace : 'gc.templates',
+					prettify : false,
+					defaultName : function( filename ) {
+						return path.basename( filename, '.stache' );
+					}
+				},
+				files : {
+					'./app/js/compiled/templates.min.js' : [ './app/views/templates/**/*.stache' ]
+				}
+			}
+		},
 		watch: {
 			gruntfile: {
 				files: '<%= jshint.gruntfile.src %>',
-				tasks: [ 'jshint:gruntfile', 'concat:js_libraries', 'uglify:js_libraries', 'jshint:app', 'concat:js_app', 'uglify:js_app', 'less:production', 'concat:css' ]
+				tasks: [ 'jshint:gruntfile', 'concat:js_libraries', 'uglify:js_libraries', 'jshint:app', 'concat:js_app'/*, 'uglify:js_app'*/, 'less:production', 'concat:css' ]
 			},
 			// lib_test: {
 			//files: '<%= jshint.lib_test.src %>',
@@ -107,11 +123,15 @@ module.exports = function( grunt ) {
 			},
 			js_app : {
 				files : [ '<%= jshint.app.src %>' ],
-				tasks : [ 'jshint:app', 'concat:js_app', 'uglify:js_app' ]
+				tasks : [ 'jshint:app', 'concat:js_app'/*, 'uglify:js_app'*/ ]
 			},
 			css : {
-				files : [ 'app/css/app/base.less', 'app/css/app/app.less' ],
+				files : [ 'app/css/app/*.less' ],
 				tasks : [ 'less:production', 'concat:css' ]
+			},
+			templates : {
+				files : [ 'app/views/templates/*.stache' ],
+				tasks : [ 'hogan' ]
 			}
 		}
 	});
@@ -123,7 +143,10 @@ module.exports = function( grunt ) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-less');
+	grunt.loadNpmTasks('grunt-contrib-hogan');
+
+	// grunt.registerMultiTask( 'hoganize_templates', 'Compiles raw templates to hogan.js.', hoganizeTask );
 
 	// Default task.
-	grunt.registerTask('default', ['jshint', 'less', /*'qunit',*/ 'concat', 'uglify']);
+	grunt.registerTask('default', ['jshint', 'less', /*'qunit',*/ 'concat', /*'uglify',*/ 'hogan']);
 };

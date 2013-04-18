@@ -1,0 +1,23 @@
+<form class="form-inline">
+	<fieldset>
+		<legend class="question-title">{{question}}</legend>
+
+		{{#text}}
+			{{#answers}}
+			<div class="control-group">
+				<label class="question-field control-label" for="{{name}}">
+					{{display}}
+				</label>
+				<div class="controls">
+					<input id="{{name}}" class="question-input" name="{{name}}" placeholder="{{display}}">
+				</div>
+			</div>
+			{{/answers}}
+		{{/text}}
+
+		{{#radio}}
+		{{/radio}}
+
+		<button class="btn btn-large btn-primary" type="submit">Next</button>
+	</fieldset>
+</form>
