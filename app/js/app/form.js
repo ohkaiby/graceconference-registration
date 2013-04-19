@@ -28,8 +28,8 @@
 					question : 'What is your name?',
 					answer_type : 'text',
 					answers : [
-						{ name : 'first_name', display : 'First name' },
-						{ name : 'last_name', display : 'Last name' }
+						{ name : 'first_name', display : 'First Name' },
+						{ name : 'last_name', display : 'Last Name' }
 					]
 				},
 
@@ -133,7 +133,7 @@
 					question : 'Great! Which church do you go to?',
 					answer_type : 'text',
 					answers : [
-						{ name : 'church_name', display : 'Name of church' }
+						{ name : 'church_name', display : 'Name of Church' }
 					]
 				}
 			],
@@ -186,8 +186,6 @@
 	};
 
 	t.formViewCore = {
-		id : 'form',
-
 		initialize : function() {
 			_.bindAll( this );
 		},
@@ -196,7 +194,7 @@
 			var questionModel = this.collection.getFirstUnansweredQuestion();
 
 			if ( this.$el.parent().length === 0 ) {
-				this.$el.appendTo( '.form-container' );
+				this.$el.appendTo( '#form' );
 			}
 
 			if ( !questionModel ) { // all questions are answered

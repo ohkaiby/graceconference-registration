@@ -9,12 +9,11 @@ body {
 	color: @default-text;
 	font-size: @default-font-size;
 	font-family: 'Open Sans', 'Helvetica', sans-serif;
-	line-height: 1.3;
-	background-color: #999;
+	background-color: @base-color;
 }
 
-h1, h2, h3, h4, h5, h6 {
-	line-height: 1.3;
+body, h1, h2, h3, h4, h5, h6, label {
+	line-height: @default-line-height;
 }
 
 h1 { font-size: 60px; }
@@ -28,32 +27,17 @@ h3, h4 { font-weight: @buff; }
 	.box-sizing();
 	min-height: 100%;
 	padding-bottom: @gutter-size;
-
-	background-color: @base-color;
-	box-shadow: 0 0 10px 5px rgba(0,0,0,0.2);
 }
 
-.form,
-.answers {
-	.box-sizing();
-	float: left;
+.logo,
+.logo-sub {
+	display: inline-block;
 }
 
-.form {
-	padding: @gutter-size 0 0 @gutter-size;
-	width: 60%;
-}
-
-.answers {
-	width: 37%;
-	padding-left: @gutter-size;
-	padding-right: @gutter-size;
-}
-
-h1 {
-	margin: 0;
-	width: 164px;
-	height: 150px;
+.logo {
+	margin: @gutter-size 10px 0 0;
+	width: 109px;
+	height: 100px;
 
 	.hide-text();
 
@@ -61,13 +45,74 @@ h1 {
 	background-size: contain;
 }
 
-.logo {
-	display: inline-block;
+.logo-sub {
+	position: relative;
+	top: 3px;
+	font-family: @cursive;
+	font-size: 32px;
+}
+
+#form,
+#answers {
+	.box-sizing();
+	float: left;
+	padding-top: @gutter-size;
+}
+
+#form {
+	width: 60%; // using golden ratio
+
+	.btn {
+		.box-sizing();
+		width: 150px
+	}
+}
+
+.question-title {
+	margin-bottom: 0;
+
+	font-family: 'Georgia', serif;
+	font-size: @title-font-size;
+	line-height: @default-line-height;
+
+	border-bottom: 0 none;
+}
+
+.fields {
+	padding-top: @gutter-size;
+}
+
+.control-group {
+	margin-bottom: @gutter-size;
+}
+
+.question-field,
+.question-input {
 	vertical-align: middle;
+	font-size: @larger-font-size;
+	line-height: @default-line-height;
+}
+
+.question-field {
+	width: 150px;
+
+	font-weight: @buff;
+	line-height: 35px;
+	text-transform: capitalize;
+}
+
+.question-input {
+	padding: 5px;
+}
+
+#answers {
+	width: 37%;
+	padding-left: @gutter-size;
+	padding-right: @gutter-size;
 }
 
 #grace-registration-form {
-	line-height: 1.3;
+	line-height: @default-line-height;
 	margin-top: @gutter-size;
 
 	label, input {
@@ -75,9 +120,7 @@ h1 {
 		font-family: 'Open Sans', 'Helvetica', sans-serif;
 	}
 
-	label {
-		line-height: 1.3;
-	}
+	
 
 	legend {
 		margin-top: (@gutter-size * 1.5);

@@ -2,22 +2,22 @@
 	<fieldset>
 		<legend class="question-title">{{question}}</legend>
 
-		{{#text}}
-			{{#answers}}
-			<div class="control-group">
-				<label class="question-field control-label" for="{{name}}">
-					{{display}}
-				</label>
-				<div class="controls">
-					<input id="{{name}}" class="question-input" name="{{name}}" placeholder="{{display}}">
+		<div class="fields">
+			{{#text}}
+				{{#answers}}
+				<div class="control-group row-fluid">
+					<label class="question-field control-label span5" for="{{name}}">
+						{{display}}
+					</label>
+					<input id="{{name}}" class="question-input span7" name="{{name}}">
 				</div>
-			</div>
-			{{/answers}}
-		{{/text}}
+				{{/answers}}
+			{{/text}}
 
-		{{#radio}}
-		{{/radio}}
+			{{#radio}}
+			{{/radio}}
+		</div>
 
-		<button class="btn btn-large btn-primary" type="submit">Next</button>
+		<button class="btn btn-large" type="submit">Next</button>
 	</fieldset>
 </form>
