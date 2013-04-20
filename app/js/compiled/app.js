@@ -152,7 +152,7 @@
 
 			for ( i = 0; i < this.models.length; i++ ) {
 				if ( !gc.app.answersCollection.findWhere(
-					{ question_name : this.models[ i ].get( 'question_name' ) }
+					{ associated_question : this.models[ i ].get( 'question_name' ) }
 				) ) {
 					return this.models[ i ];
 				}
@@ -166,7 +166,8 @@
 		defaults : {
 			field : '', // corresponding to the saved key,
 			display : '', // display value of key
-			value : undefined // the answer
+			value : undefined, // the answer
+			associated_question : '' // question_name
 		}
 	};
 
@@ -206,48 +207,61 @@
 		},
 
 		processAnswer : function() {
-			this.saveAnswer();
-
-			// trigger rendering of answers section
-
-
-			// trigger rendering of progress bar
-
+			this.
+				saveAnswer().
+				render();
 
 			// if it's the last answer, save to db.
-
-
-			// move to next question / renderComplete
 
 
 			return false;
 		},
 
 		saveAnswer : function() {
-			var answerEls,
-				storeAnswers = [],
-				collectionAnswers = [],
-				existingAnswer,
+			var rawAnswers = [],
+				answersFormattedForCollection = [],
 				i;
 
 			if ( gc.app.selected.question.get( 'answer_type' ) === 'text' ) {
-				answerEls = this.$el.find( 'input' );
-				for ( i = 0; i < answerEls.length; i++ ) {
-					storeAnswers.push( { field : answerEls[ i ].name, value : answerEls[ i ].value, display : gc.app.selected.question.get( 'answers' )[ i ].display } );
-				}
+				rawAnswers = this.generateTextAnswers();
 			} else if ( gc.app.selected.question.get( 'answer_type' ) === 'radio' ) {
 			}
 
-			for ( i = 0; i < storeAnswers.length; i++ ) {
-				if ( existingAnswer = gc.app.answersCollection.findWhere( { field : storeAnswers[ i ].field } ) ) {
-					existingAnswer.set( 'value', storeAnswers[ i ].value );
-				} else {
-					collectionAnswers.push( new gc.models.answer( storeAnswers[ i ] ) );
-				}
-
-				gc.app.localstorage.save( storeAnswers[ i ].field, storeAnswers[ i ].value );
+			for ( i = 0; i < rawAnswers.length; i++ ) {
+				this.addAnswer( rawAnswers[ i ], answersFormattedForCollection );
+				gc.app.localstorage.save( rawAnswers[ i ].field, rawAnswers[ i ].value );
 			}
-			gc.app.answersCollection.add( collectionAnswers );
+			gc.app.answersCollection.add( answersFormattedForCollection );
+
+			return this;
+		},
+
+		generateTextAnswers : function() {
+			var i,
+				answerEls,
+				storeAnswers = [];
+
+			answerEls = this.$el.find( 'input' );
+			for ( i = 0; i < answerEls.length; i++ ) {
+				storeAnswers.push( {
+					field : answerEls[ i ].name,
+					value : answerEls[ i ].value,
+					display : gc.app.selected.question.get( 'answers' )[ i ].display,
+					associated_question : gc.app.selected.question.get( 'question_name' )
+				} );
+			}
+
+			return storeAnswers;
+		},
+
+		addAnswer : function( rawAnswer, collectedAnswers ) {
+			var existingAnswer;
+
+			if ( existingAnswer = gc.app.answersCollection.findWhere( { field : rawAnswer.field } ) ) {
+				existingAnswer.set( 'value', rawAnswer.value );
+			} else {
+				collectedAnswers.push( new gc.models.answer( rawAnswer ) );
+			}
 		}
 	};
 

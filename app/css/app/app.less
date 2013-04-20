@@ -76,8 +76,9 @@ h3, h4 { font-weight: @buff; }
 #form,
 #answers {
 	.box-sizing();
-	float: left;
+	display: inline-block;
 	padding-top: @gutter-size;
+	vertical-align: top;
 }
 
 #form {
@@ -114,7 +115,7 @@ h3, h4 { font-weight: @buff; }
 }
 
 .question-field {
-	width: 150px;
+	max-width: 150px;
 
 	line-height: 35px;
 	text-transform: capitalize;
