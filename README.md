@@ -9,6 +9,7 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 ### Components
 * Pager
 * Media component
+* Progress Bars
 
 ### JS Components
 * Modals

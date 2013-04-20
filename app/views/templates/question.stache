@@ -1,6 +1,6 @@
 <form class="form-inline">
 	<fieldset>
-		<legend class="question-title">{{question}}</legend>
+		<legend class="question-title title">{{question}}</legend>
 
 		<div class="fields">
 			{{#text}}
@@ -9,7 +9,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" class="question-input span7" name="{{name}}">
+					<input id="{{name}}" class="question-input text span7" name="{{name}}">
 				</div>
 				{{/answers}}
 			{{/text}}

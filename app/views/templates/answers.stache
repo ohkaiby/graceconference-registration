@@ -1,0 +1,11 @@
+<h2 class="subtitle">Your Info</h2>
+<div class="info">
+	<table class="info-table">
+		{{#answers}}
+			<tr>
+				<td class="field">{{display}}</td>
+				<td class="value">{{value}}</td>
+			</tr>
+		{{/answers}}
+	</table>
+</div>

@@ -1,8 +1,3 @@
-/*global Backbone:false*/
-/*global gc:false*/
-/*global _:false*/
-/*global tester:false*/
-
 ( function( $, tester, undefined ) {
 	var t = tester || {};
 
@@ -14,6 +9,12 @@
 		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
+		gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
+		gc.app.answersView = new( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
+
+		gc.app.localstorage = new t.localStorageController();
+
+		gc.app.selected = {};
 
 		t.fillQuestions();
 		gc.app.formView.render();
@@ -121,18 +122,6 @@
 					answers : [
 						{ name : 'church_yes', display : 'Yes, I attend church regularly' },
 						{ name : 'church_no', display : 'No, I don’t attend church regularly' }
-					],
-					dependents : [
-						{ question_name : 'church_name', dependent_answer : 'church_yes' }
-					]
-				},
-
-				{
-					question_name : 'church_name',
-					question : 'Great! Which church do you go to?',
-					answer_type : 'text',
-					answers : [
-						{ name : 'church_name', display : 'Name of Church' }
 					]
 				}
 			],
@@ -147,7 +136,7 @@
 		defaults : {
 			question_name : '', // question name attribute (for referrals from other questions)
 			question : '', // the actual question
-			answer_type : 'link', // answer input type attribute
+			answer_type : 'text', // answer input type attribute
 			answers : [], // answer is in format: { name : 'input_name', display : 'A String' }. text input fields use 'display' as their placeholder text.
 			dependents : [] // questions that are dependent on an answer. dependent format: { question_name, dependent_answer }
 		}
@@ -175,8 +164,9 @@
 
 	t.answerModelCore = { // an answer to a question
 		defaults : {
-			question_name : '', // corresponding to the question asked,
-			answer_value : undefined // the answer
+			field : '', // corresponding to the saved key,
+			display : '', // display value of key
+			value : undefined // the answer
 		}
 	};
 
@@ -185,16 +175,17 @@
 	};
 
 	t.formViewCore = {
+		el : '#form',
+		events : {
+			'submit form' : 'processAnswer'
+		},
+
 		initialize : function() {
 			_.bindAll( this );
 		},
 
 		render : function() {
-			var questionModel = this.collection.getFirstUnansweredQuestion();
-
-			if ( this.$el.parent().length === 0 ) {
-				this.$el.appendTo( '#form' );
-			}
+			var questionModel = gc.app.selected.question = this.collection.getFirstUnansweredQuestion();
 
 			if ( !questionModel ) { // all questions are answered
 				this.renderComplete();
@@ -212,7 +203,137 @@
 
 		renderComplete : function() {
 
+		},
+
+		processAnswer : function() {
+			this.saveAnswer();
+
+			// trigger rendering of answers section
+
+
+			// trigger rendering of progress bar
+
+
+			// if it's the last answer, save to db.
+
+
+			// move to next question / renderComplete
+
+
+			return false;
+		},
+
+		saveAnswer : function() {
+			var answerEls,
+				storeAnswers = [],
+				collectionAnswers = [],
+				existingAnswer,
+				i;
+
+			if ( gc.app.selected.question.get( 'answer_type' ) === 'text' ) {
+				answerEls = this.$el.find( 'input' );
+				for ( i = 0; i < answerEls.length; i++ ) {
+					storeAnswers.push( { field : answerEls[ i ].name, value : answerEls[ i ].value, display : gc.app.selected.question.get( 'answers' )[ i ].display } );
+				}
+			} else if ( gc.app.selected.question.get( 'answer_type' ) === 'radio' ) {
+			}
+
+			for ( i = 0; i < storeAnswers.length; i++ ) {
+				if ( existingAnswer = gc.app.answersCollection.findWhere( { field : storeAnswers[ i ].field } ) ) {
+					existingAnswer.set( 'value', storeAnswers[ i ].value );
+				} else {
+					collectionAnswers.push( new gc.models.answer( storeAnswers[ i ] ) );
+				}
+
+				gc.app.localstorage.save( storeAnswers[ i ].field, storeAnswers[ i ].value );
+			}
+			gc.app.answersCollection.add( collectionAnswers );
 		}
+	};
+
+	t.answersViewCore = {
+		className : 'answers',
+
+		initialize : function() {
+			_.bindAll( this );
+
+			this.collection.on( 'add', this.render );
+			this.collection.on( 'change', this.render );
+			this.collection.on( 'reset', this.reset );
+		},
+
+		render : function() {
+			this.$el.empty().append( gc.template( 'answers', this.generateTemplateVars() ) );
+
+			if ( this.$el.parent().length === 0 ) {
+				this.$el.appendTo( '#answers' );
+			}
+		},
+
+		generateTemplateVars : function() {
+			var stache = {
+					answers : this.collection.toJSON()
+				};
+
+				return stache;
+		},
+
+		reset : function() {
+			this.$el.empty();
+		}
+	};
+
+	t.progressBarViewCore = {
+		el : '#progress',
+
+		initialize : function() {
+			_.bindAll( this );
+
+			this.collection.on( 'add', this.render );
+			this.collection.on( 'change', this.render );
+			this.collection.on( 'reset', this.reset );
+		},
+
+		render : function() {
+			this.$el.
+				show().
+				find( '.bar' ).css( 'width', this.getPercentageComplete() + '%' );
+		},
+
+		getPercentageComplete : function() {
+			return 100;
+		},
+
+		reset : function() {
+			this.$el.hide();
+		}
+	};
+
+	t.localStorageController = function() {
+		this.save = function( key, value ) {
+			if ( Modernizr.localstorage ) {
+				window.localStorage.setItem( key, value );
+				return true;
+			}
+
+			return false;
+		};
+
+		this.load = function( key ) {
+			if ( Modernizr.localstorage ) {
+				return window.localStorage.getItem( key );
+			}
+
+			return undefined;
+		};
+
+		this.clear = function() {
+			if ( Modernizr.localstorage ) {
+				window.localStorage.clear();
+			}
+
+			return false;
+		};
 	};
 
 	gc.init( function() {

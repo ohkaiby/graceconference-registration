@@ -1,5 +1,3 @@
-/*global module:false*/
-/*global require:false*/
 var path = require( 'path' );
 
 module.exports = function( grunt ) {
@@ -82,7 +80,17 @@ module.exports = function( grunt ) {
 				boss: true,
 				eqnull: true,
 				browser: true,
-				globals: {}
+				globals: {
+					module : false,
+					require : false,
+					Modernizr : false,
+					jQuery : false,
+					Backbone : false,
+					gc : false,
+					_ : false,
+					tester : false,
+					console : false
+				}
 			},
 			gruntfile: {
 				src: 'Gruntfile.js'

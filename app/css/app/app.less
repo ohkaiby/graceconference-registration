@@ -8,7 +8,7 @@ html, body {
 body {
 	color: @default-text;
 	font-size: @default-font-size;
-	font-family: 'Open Sans', 'Helvetica', sans-serif;
+	font-family: @sans-serif;
 	background-color: @base-color;
 }
 
@@ -29,12 +29,8 @@ h3, h4 { font-weight: @buff; }
 	padding-bottom: @gutter-size;
 }
 
-.logo,
-.logo-sub {
-	display: inline-block;
-}
-
 .logo {
+	display: inline-block;
 	margin: @gutter-size 10px 0 0;
 	width: 109px;
 	height: 100px;
@@ -52,6 +48,31 @@ h3, h4 { font-weight: @buff; }
 	font-size: 32px;
 }
 
+.title,
+.subtitle {
+	color: @darkest;
+}
+
+.title {
+	font-size: @title-font-size;
+}
+
+.subtitle {
+	font-size: @larger-font-size;
+}
+
+#progress {
+	display: none;
+
+	.subtitle {
+		margin-bottom: 5px;
+	}
+
+	.bar {
+		.transition(width 2s);
+	}
+}
+
 #form,
 #answers {
 	.box-sizing();
@@ -60,7 +81,7 @@ h3, h4 { font-weight: @buff; }
 }
 
 #form {
-	width: 60%; // using golden ratio
+	width: 59%; // using golden ratio
 
 	.btn {
 		.box-sizing();
@@ -72,7 +93,6 @@ h3, h4 { font-weight: @buff; }
 	margin-bottom: 0;
 
 	font-family: 'Georgia', serif;
-	font-size: @title-font-size;
 	line-height: @default-line-height;
 
 	border-bottom: 0 none;
@@ -96,7 +116,6 @@ h3, h4 { font-weight: @buff; }
 .question-field {
 	width: 150px;
 
-	font-weight: @buff;
 	line-height: 35px;
 	text-transform: capitalize;
 }
@@ -106,9 +125,33 @@ h3, h4 { font-weight: @buff; }
 }
 
 #answers {
-	width: 37%;
+	.box-sizing();
+	width: 36%;
+	margin-left: @gutter-size;
 	padding-left: @gutter-size;
 	padding-right: @gutter-size;
+
+	.subtitle {
+		margin-bottom: 5px;
+		font-weight: normal;
+		text-transform: uppercase;
+	}
+
+	.field,
+	.value {
+		width: 50%;
+		padding-bottom: 5px;
+		font-size: @smaller-font-size;
+	}
+
+	.field {
+		.box-sizing();
+		padding-right: @gutter-size;
+	}
+
+	.value {
+		color: @subtle-text;
+	}
 }
 
 #grace-registration-form {
@@ -117,7 +160,7 @@ h3, h4 { font-weight: @buff; }
 
 	label, input {
 		font-size: @default-font-size;
-		font-family: 'Open Sans', 'Helvetica', sans-serif;
+		font-family: @sans-serif;
 	}
 
 	
