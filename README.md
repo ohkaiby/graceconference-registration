@@ -7,19 +7,16 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 ### Bass CSS (All except "code")
 
 ### Components
-* Pager
-* Media component
+* Alerts
 * Progress Bars
+* Media component
 
 ### JS Components
 * Modals
 
 ### Misc (All except "wells")
 
-### Responsive
-* Tablets
-* Desktops
-* Large desktops
+### Responsive (all)
 
 ### jQuery Plugins
 * Transitions

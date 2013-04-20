@@ -4,6 +4,8 @@
 
 		<div class="fields">
 			{{#text}}
+				<div class="alert alert-error">Please fill all fields.</div>
+
 				{{#answers}}
 				<div class="control-group row-fluid">
 					<label class="question-field control-label span5" for="{{name}}">
@@ -15,6 +17,7 @@
 			{{/text}}
 
 			{{#radio}}
+				<div class="alert alert-error">Please select an option.</div>
 			{{/radio}}
 		</div>
 

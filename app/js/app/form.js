@@ -207,14 +207,33 @@
 		},
 
 		processAnswer : function() {
-			this.
-				saveAnswer().
-				render();
+			if ( this.validateAnswer() ) {
+				this.saveAnswer().render();
+			} else {
+				this.$el.find( '.alert' ).show();
+			}
 
 			// if it's the last answer, save to db.
 
 
 			return false;
+		},
+
+		validateAnswer : function() {
+			var answerEls,
+				i;
+
+			if ( gc.app.selected.question.get( 'answer_type' ) === 'text' ) {
+				answerEls = this.$el.find( 'input' );
+				for ( i = 0; i < answerEls.length; i++ ) {
+					if ( _.isEmpty( $.trim( answerEls[ i ].value ) ) ) {
+						return false;
+					}
+				}
+			} else if ( gc.app.selected.question.get( 'answer_type' ) === 'radio' ) {
+			}
+
+			return true;
 		},
 
 		saveAnswer : function() {
