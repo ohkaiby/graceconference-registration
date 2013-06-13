@@ -1,3 +1,4 @@
+// still need to figure out dependent logic.
 ( function( $, tester, undefined ) {
 	var t = tester || {};
 
@@ -170,9 +171,11 @@
 			var i;
 
 			for ( i = 0; i < this.models.length; i++ ) {
-				if ( !gc.app.answersCollection.findWhere(
-					{ associated_question : this.models[ i ].get( 'question_name' ) }
-				) ) {
+				if (
+					!gc.app.answersCollection.findWhere(
+						{ associated_question : this.models[ i ].get( 'question_name' ) }
+					)
+				) {
 					return this.models[ i ];
 				}
 			}
@@ -197,7 +200,8 @@
 	t.formViewCore = {
 		el : '#form',
 		events : {
-			'submit form' : 'processAnswer'
+			'submit form' : 'processAnswer',
+			'click .radio, .input-radio' : 'submitForm'
 		},
 
 		initialize : function() {
@@ -225,6 +229,11 @@
 
 		},
 
+		submitForm : function() {
+			this.$el.submit(); // triggers processAnswer
+			return false;
+		},
+
 		processAnswer : function() {
 			if ( this.validateAnswer() ) {
 				this.saveAnswer().render();
@@ -249,7 +258,6 @@
 						return false;
 					}
 				}
-			} else if ( gc.app.selected.question.get( 'answer_type' ) === 'radio' ) {
 			}
 
 			return true;
@@ -258,12 +266,14 @@
 		saveAnswer : function() {
 			var rawAnswers = [],
 				answersFormattedForCollection = [],
+				answerType = gc.app.selected.question.get( 'answer_type' ),
+				rawAnswerMap = {
+					text : this.generateTextAnswers,
+					radio : this.generateRadioAnswers
+				},
 				i;
 
-			if ( gc.app.selected.question.get( 'answer_type' ) === 'text' ) {
-				rawAnswers = this.generateTextAnswers();
-			} else if ( gc.app.selected.question.get( 'answer_type' ) === 'radio' ) {
-			}
+			rawAnswerMap[ answerType ] && ( rawAnswers = rawAnswerMap[ answerType ]() );
 
 			for ( i = 0; i < rawAnswers.length; i++ ) {
 				this.addAnswer( rawAnswers[ i ], answersFormattedForCollection );
@@ -292,7 +302,19 @@
 			return storeAnswers;
 		},
 
-		generateRadioAnswers : function() {},
+		generateRadioAnswers : function() {
+			var answerRadio = this.$el.find( 'input:checked' ),
+				answerData = _.find( gc.app.selected.question.get( 'answers' ), function( answer ) {
+					return answer.name === answerRadio.val();
+				} );
+
+			return [ {
+				field : gc.app.selected.question.get( 'question_name' ),
+				value : answerData.name,
+				display : answerData.display,
+				associated_question : gc.app.selected.question.get( 'question_name' )
+			} ];
+		},
 
 		addAnswer : function( rawAnswer, collectedAnswers ) {
 			var existingAnswer;

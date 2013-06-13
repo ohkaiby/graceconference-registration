@@ -80,6 +80,7 @@ module.exports = function( grunt ) {
 				boss: true,
 				eqnull: true,
 				browser: true,
+				expr : true,
 				globals: {
 					module : false,
 					require : false,
