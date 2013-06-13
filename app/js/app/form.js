@@ -129,6 +129,25 @@
 
 		for ( i = 0; i < questions.length; i++ ) {
 			gc.app.questionsCollection.add( new gc.models.question( questions[ i ] ) );
+			t.fillSavedAnswer( questions[ i ] );
+		}
+	};
+
+	t.fillSavedAnswer = function( question ) {
+		var i,
+			savedAnswer;
+
+		if ( question.answer_type === 'text' ) {
+			for ( i = 0; i < question.answers.length; i++ ) {
+				if ( savedAnswer = gc.app.localstorage.load( question.answers[ i ].name ) ) {
+					gc.app.answersCollection.add( new gc.models.answer( {
+						field : question.answers[ i ].name,
+						value : savedAnswer,
+						display : question.answers[ i ].display,
+						associated_question : question.question_name
+					} ) );
+				}
+			}
 		}
 	};
 
@@ -272,6 +291,8 @@
 
 			return storeAnswers;
 		},
+
+		generateRadioAnswers : function() {},
 
 		addAnswer : function( rawAnswer, collectedAnswers ) {
 			var existingAnswer;
