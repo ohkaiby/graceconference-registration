@@ -1,4 +1,3 @@
-// still need to figure out dependent logic.
 ( function( $, tester, undefined ) {
 	var t = tester || {};
 
@@ -37,20 +36,18 @@
 				{
 					question_name : 'age',
 					question : 'How old are you?',
+					display : 'How old',
 					answer_type : 'radio',
 					answers : [
 						{ name : '12_17', display : '12 to 17 years old' },
 						{ name : '18', display : '18+ years old' }
-					],
-					dependents : [
-						{ question_name : 'grade', dependent_answer : '12_17' },
-						{ question_name : 'status', dependent_answer : '18' }
 					]
 				},
 
 				{
 					question_name : 'grade',
 					question : 'What grade are you in?',
+					display : 'What grade',
 					answer_type : 'radio',
 					answers : [
 						{ name : '6th', display : '6th grade' },
@@ -60,12 +57,17 @@
 						{ name : 'sophomore', display : 'Sophomore' },
 						{ name : 'junior', display : 'Junior' },
 						{ name : 'senior', display : 'Senior' }
-					]
+					],
+					depends_on : {
+						question_name : 'age',
+						answer_names : [ '12_17' ]
+					}
 				},
 
 				{
 					question_name : 'status',
 					question : 'You are… ?',
+					display : 'Status',
 					answer_type : 'radio',
 					answers : [
 						{ name : 'high_school_18', display : 'Still in high school' },
@@ -74,16 +76,16 @@
 						{ name : 'single', display : 'Single and not in school' },
 						{ name : 'married', display : 'Married' }
 					],
-					dependents : [
-						{ question_name : 'undergrad_year', dependent_answer : 'undergrad' },
-						{ question_name : 'kids', dependent_answer : 'single' },
-						{ question_name : 'kids', dependent_answer : 'married' }
-					]
+					depends_on : {
+						question_name : 'age',
+						answer_names : [ '18' ]
+					}
 				},
 
 				{
 					question_name : 'undergrad_year',
 					question : 'What year in undergrad?',
+					display : 'College year',
 					answer_type : 'radio',
 					answers : [
 						{ name : '1st', display : 'First year' },
@@ -91,20 +93,26 @@
 						{ name : '3rd', display : 'Third year' },
 						{ name : '4th', display : 'Fourth year' },
 						{ name : '5th_plus', display : 'Fifth+ year' }
-					]
+					],
+					depends_on : {
+						question_name : 'status',
+						answer_names : [ 'undergrad' ]
+					}
 				},
 
 				{
 					question_name : 'toddlers',
 					question : 'Are you bringing any toddlers?',
+					display : 'Bringing toddlers',
 					answer_type : 'radio',
 					answers : [
 						{ name : 'yes', display : 'Yes' },
 						{ name : 'no', display : 'No' }
 					],
-					dependents : [
-						{ question_name : 'how_many_toddlers', dependent_answer : 'yes' }
-					]
+					depends_on : {
+						question_name : 'status',
+						answer_names : [ 'single', 'married' ]
+					}
 				},
 
 				{
@@ -113,12 +121,17 @@
 					answer_type : 'text',
 					answers : [
 						{ name : 'how_many_toddlers', display : '# of toddlers' }
-					]
+					],
+					depends_on : {
+						question_name : 'toddlers',
+						answer_names : [ 'yes' ]
+					}
 				},
 
 				{
 					question_name : 'church_attendance',
 					question : 'Are you attending church services regularly?',
+					display : 'Attending church',
 					answer_type : 'radio',
 					answers : [
 						{ name : 'church_yes', display : 'Yes, I attend church regularly' },
@@ -149,6 +162,15 @@
 					} ) );
 				}
 			}
+		} else if ( question.answer_type === 'radio' ) {
+			if ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) {
+				gc.app.answersCollection.add( new gc.models.answer( {
+					field : question.question_name,
+					value : savedAnswer,
+					display : question.display,
+					associated_question : question.question_name
+				} ) );
+			}
 		}
 	};
 
@@ -158,7 +180,7 @@
 			question : '', // the actual question
 			answer_type : 'text', // answer input type attribute
 			answers : [], // answer is in format: { name : 'input_name', display : 'A String' }. text input fields use 'display' as their placeholder text.
-			dependents : [] // questions that are dependent on an answer. dependent format: { question_name, dependent_answer }
+			depends_on : {} // question/answers that are a prereq for this question to display. format: { question_name = string, answer_names = [ strings ] }
 		}
 	};
 
@@ -172,15 +194,41 @@
 
 			for ( i = 0; i < this.models.length; i++ ) {
 				if (
-					!gc.app.answersCollection.findWhere(
-						{ associated_question : this.models[ i ].get( 'question_name' ) }
-					)
+						!gc.app.answersCollection.findWhere( { associated_question : this.models[ i ].get( 'question_name' ) } ) &&
+						this.validateDependencies( this.models[ i ] )
 				) {
 					return this.models[ i ];
 				}
 			}
 
 			return false; // all questions answered
+		},
+
+		// checks if question depends on any other questions and returns true if it does not depend on any other questions to be answered OR if the dependent questions have been answered with the correct answer
+		validateDependencies : function( questionModel ) {
+			var answerCurrentQuestionDependsOn = questionModel.get( 'depends_on' ),
+				savedDependentQuestion,
+				textAnswers,
+				i;
+
+			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
+				if ( questionModel.get( 'type' ) === 'text' ) {
+					textAnswers = questionModel.get( 'answers' );
+
+					for ( i = 0; i < textAnswers.length; i++ ) {
+						if ( answerCurrentQuestionDependsOn.question_name = textAnswers[ i ].name ) {
+							savedDependentQuestion = gc.app.answersCollection.findWhere( { field : textAnswers[ i ].name } );
+							break;
+						}
+					}
+				} else {
+					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } ); // the dependent question that we've saved
+				}
+
+				return ( savedDependentQuestion && $.inArray( savedDependentQuestion.get( 'value' ), answerCurrentQuestionDependsOn.answer_names ) !== -1 ) ? true : false;
+			}
+
+			return true;
 		}
 	};
 
@@ -201,7 +249,7 @@
 		el : '#form',
 		events : {
 			'submit form' : 'processAnswer',
-			'click .radio, .input-radio' : 'submitForm'
+			'click .radio, .input-radio' : 'processAnswer'
 		},
 
 		initialize : function() {
@@ -213,10 +261,9 @@
 
 			if ( !questionModel ) { // all questions are answered
 				this.renderComplete();
+			} else {
+				this.renderQuestion( questionModel.toJSON() );
 			}
-
-			this.renderQuestion( questionModel.toJSON() );
-			return this;
 		},
 
 		renderQuestion : function( stache ) {
@@ -226,12 +273,7 @@
 		},
 
 		renderComplete : function() {
-
-		},
-
-		submitForm : function() {
-			this.$el.submit(); // triggers processAnswer
-			return false;
+			console.log( 'out of questions!' );
 		},
 
 		processAnswer : function() {
@@ -306,13 +348,15 @@
 			var answerRadio = this.$el.find( 'input:checked' ),
 				answerData = _.find( gc.app.selected.question.get( 'answers' ), function( answer ) {
 					return answer.name === answerRadio.val();
-				} );
+				} ),
+				questionName = gc.app.selected.question.get( 'question_name' ),
+				questionDisplay = gc.app.selected.question.get( 'display' );
 
 			return [ {
-				field : gc.app.selected.question.get( 'question_name' ),
+				field : questionName,
 				value : answerData.name,
-				display : answerData.display,
-				associated_question : gc.app.selected.question.get( 'question_name' )
+				display : questionDisplay,
+				associated_question : questionName
 			} ];
 		},
 
@@ -377,7 +421,7 @@
 		},
 
 		getPercentageComplete : function() {
-			return 100;
+			return 100; // TO DO
 		},
 
 		reset : function() {
