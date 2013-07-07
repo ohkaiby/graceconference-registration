@@ -11,10 +11,23 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" class="question-input text span7" name="{{name}}">
+					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}">
 				</div>
 				{{/answers}}
 			{{/text}}
+
+			{{#email}}
+				<div class="alert alert-error">Please enter your email.</div>
+
+				{{#answers}}
+				<div class="control-group row-fluid">
+					<label class="question-field control-label span5" for="{{name}}">
+						{{display}}
+					</label>
+					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}">
+				</div>
+				{{/answers}}
+			{{/email}}
 
 			{{#radio}}
 				<div class="alert alert-error">Please select an option.</div>
@@ -28,8 +41,7 @@
 			{{/radio}}
 		</div>
 
-		{{#text}}
-		<button class="btn btn-large" type="submit">Next</button>
-		{{/text}}
+		{{#text}}<button class="btn btn-large" type="submit">Next</button>{{/text}}
+		{{#email}}<button class="btn btn-large" type="submit">Next</button>{{/email}}
 	</fieldset>
 </form>

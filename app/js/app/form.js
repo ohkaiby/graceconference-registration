@@ -34,6 +34,15 @@
 				},
 
 				{
+					question_name : 'email',
+					question : 'What is your email?',
+					answer_type : 'email',
+					answers : [
+						{ name : 'email', display : 'Email Address' }
+					]
+				},
+
+				{
 					question_name : 'age',
 					question : 'How old are you?',
 					display : 'How old',
@@ -151,7 +160,7 @@
 		var i,
 			savedAnswer;
 
-		if ( question.answer_type === 'text' ) {
+		if ( question.answer_type === 'text' || question.answer_type === 'email' ) {
 			for ( i = 0; i < question.answers.length; i++ ) {
 				if ( savedAnswer = gc.app.localstorage.load( question.answers[ i ].name ) ) {
 					gc.app.answersCollection.add( new gc.models.answer( {
@@ -207,12 +216,13 @@
 		// checks if question depends on any other questions and returns true if it does not depend on any other questions to be answered OR if the dependent questions have been answered with the correct answer
 		validateDependencies : function( questionModel ) {
 			var answerCurrentQuestionDependsOn = questionModel.get( 'depends_on' ),
+				questionType = questionModel.get( 'answer_type' ),
 				savedDependentQuestion,
 				textAnswers,
 				i;
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
-				if ( questionModel.get( 'type' ) === 'text' ) {
+				if ( questionType === 'text' || questionType === 'email' ) {
 					textAnswers = questionModel.get( 'answers' );
 
 					for ( i = 0; i < textAnswers.length; i++ ) {
@@ -221,7 +231,7 @@
 							break;
 						}
 					}
-				} else {
+				} else if ( questionType === 'radio' ) {
 					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } ); // the dependent question that we've saved
 				}
 
@@ -269,7 +279,9 @@
 		renderQuestion : function( stache ) {
 			stache[ stache.answer_type ] = true;
 
-			this.$el.empty().append( gc.template( 'question', stache ) );
+			this.$el.empty().
+				append( gc.template( 'question', stache ) ).
+				find( 'input[type="text"], input[type="email"]' ).first().focus();
 		},
 
 		renderComplete : function() {
@@ -281,6 +293,7 @@
 				this.saveAnswer().render();
 			} else {
 				this.$el.find( '.alert' ).show();
+				this.$el.find( 'input' ).first().focus();
 			}
 
 			// if it's the last answer, save to db.
@@ -290,10 +303,11 @@
 		},
 
 		validateAnswer : function() {
-			var answerEls,
+			var answerType = gc.app.selected.question.get( 'answer_type' ),
+				answerEls,
 				i;
 
-			if ( gc.app.selected.question.get( 'answer_type' ) === 'text' ) {
+			if ( answerType === 'text' || answerType === 'email' ) {
 				answerEls = this.$el.find( 'input' );
 				for ( i = 0; i < answerEls.length; i++ ) {
 					if ( _.isEmpty( $.trim( answerEls[ i ].value ) ) ) {
@@ -311,7 +325,8 @@
 				answerType = gc.app.selected.question.get( 'answer_type' ),
 				rawAnswerMap = {
 					text : this.generateTextAnswers,
-					radio : this.generateRadioAnswers
+					radio : this.generateRadioAnswers,
+					email : this.generateTextAnswers
 				},
 				i;
 

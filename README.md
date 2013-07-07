@@ -24,3 +24,7 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 * Alerts
 * Buttons
 * Typeahead
+
+## Things To Do
+* Dev vs. Prod environment configuration.
+* Precompiling Templates.

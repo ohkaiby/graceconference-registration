@@ -29,8 +29,13 @@ h3, h4 { font-weight: @buff; }
 	padding-bottom: @gutter-size;
 }
 
-.logo {
+.logo, .logo-sub {
 	display: inline-block;
+	line-height: 100px;
+	vertical-align: baseline;
+}
+
+.logo {
 	margin: @gutter-size 10px 0 0;
 	width: 109px;
 	height: 100px;
@@ -43,9 +48,9 @@ h3, h4 { font-weight: @buff; }
 
 .logo-sub {
 	position: relative;
-	top: 3px;
+	top: -8px;
 	font-family: @cursive;
-	font-size: 32px;
+	font-size: 40px;
 }
 
 .title,
@@ -73,7 +78,7 @@ h3, h4 { font-weight: @buff; }
 #answers {
 	.box-sizing();
 	display: inline-block;
-	padding-top: @gutter-size;
+	padding-top: (@gutter-size / 3);
 	vertical-align: top;
 }
 
@@ -100,13 +105,12 @@ h3, h4 { font-weight: @buff; }
 }
 
 .fields {
-	padding-top: @gutter-size;
+	padding-top: (@gutter-size / 1.5);
 	padding-bottom: @gutter-size;
 }
 
-.control-group {
-	margin-bottom: @gutter-size;
-}
+.control-group { margin-bottom: @gutter-size; }
+.control-group:last-child { margin-bottom: 0; }
 
 .question-field,
 .question-input,
@@ -114,6 +118,14 @@ h3, h4 { font-weight: @buff; }
 	vertical-align: middle;
 	font-size: @larger-font-size;
 	line-height: @default-line-height;
+}
+
+.radio, .checkbox {
+	margin-bottom: 10px;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
 }
 
 .question-field {
