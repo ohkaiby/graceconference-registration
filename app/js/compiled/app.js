@@ -1,4 +1,6 @@
-( function( $, tester, undefined ) {
+;( function( $, _, Backbone, Modernizr, tester, undefined ) {
+	'use strict';
+
 	var t = tester || {};
 
 	t.init = function() {
@@ -146,6 +148,38 @@
 						{ name : 'church_yes', display : 'Yes, I attend church regularly' },
 						{ name : 'church_no', display : 'No, I don’t attend church regularly' }
 					]
+				},
+
+				{
+					question_name : 'phone',
+					question : 'What’s your phone number?',
+					answer_type : 'phone',
+					answers : [
+						{ name : 'phone', display : 'Phone number' }
+					]
+				},
+
+				{
+					question_name : 'phone_is_mobile',
+					question : 'Is this a cell phone number?',
+					display : 'Is cellphone',
+					answer_type : 'radio',
+					answers : [
+						{ name : 'phone_is_mobile_yes', display : 'Yes, it’s a cell phone' },
+						{ name : 'phone_is_mobile_no', display : 'No, it’s not cell phone' }
+					]
+				},
+
+				{
+					question_name : 'address',
+					question : 'What is your address?',
+					answer_type : 'text',
+					answers : [
+						{ name : 'address', display : 'Address' },
+						{ name : 'city', display : 'City' },
+						{ name : 'state', display : 'State' },
+						{ name : 'zip', display : 'Zip' }
+					]
 				}
 			],
 			i;
@@ -160,7 +194,7 @@
 		var i,
 			savedAnswer;
 
-		if ( question.answer_type === 'text' || question.answer_type === 'email' ) {
+		if ( question.answer_type === 'text' || question.answer_type === 'email' || question.answer_type === 'phone' ) {
 			for ( i = 0; i < question.answers.length; i++ ) {
 				if ( savedAnswer = gc.app.localstorage.load( question.answers[ i ].name ) ) {
 					gc.app.answersCollection.add( new gc.models.answer( {
@@ -222,7 +256,7 @@
 				i;
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
-				if ( questionType === 'text' || questionType === 'email' ) {
+				if ( questionType === 'text' || questionType === 'email' || questionType === 'phone' ) {
 					textAnswers = questionModel.get( 'answers' );
 
 					for ( i = 0; i < textAnswers.length; i++ ) {
@@ -259,7 +293,7 @@
 		el : '#form',
 		events : {
 			'submit form' : 'processAnswer',
-			'click .radio, .input-radio' : 'processAnswer'
+			'click .input-radio' : 'processAnswer'
 		},
 
 		initialize : function() {
@@ -281,7 +315,7 @@
 
 			this.$el.empty().
 				append( gc.template( 'question', stache ) ).
-				find( 'input[type="text"], input[type="email"]' ).first().focus();
+				find( 'input[type="text"], input[type="email"], input[type="tel"]' ).first().focus();
 		},
 
 		renderComplete : function() {
@@ -304,19 +338,44 @@
 
 		validateAnswer : function() {
 			var answerType = gc.app.selected.question.get( 'answer_type' ),
-				answerEls,
+				validationFunctions = {
+					text : this.validateTextAnswers,
+					email : this.validateTextAnswers,
+					phone : this.validatePhone
+				};
+
+			if ( validationFunctions[ answerType ] ) {
+				return validationFunctions[ answerType ]();
+			}
+
+			return true;
+		},
+
+		validateTextAnswers : function() {
+			var $inputEls = this.$el.find( 'input' ),
 				i;
 
-			if ( answerType === 'text' || answerType === 'email' ) {
-				answerEls = this.$el.find( 'input' );
-				for ( i = 0; i < answerEls.length; i++ ) {
-					if ( _.isEmpty( $.trim( answerEls[ i ].value ) ) ) {
-						return false;
-					}
+			for ( i = 0; i < $inputEls.length; i++ ) {
+				if ( _.isEmpty( $.trim( $inputEls[ i ].value ) ) ) {
+					return false;
 				}
 			}
 
 			return true;
+		},
+
+		validatePhone : function() {
+			var phoneNumber = this.$el.find( 'input[type="tel"]' ).val();
+
+			return this.trimPhoneValue( phoneNumber ).toString().length === 10;
+		},
+
+		trimPhoneValue : function( initialValue ) {
+			var phoneNumber = $.trim( initialValue );
+			phoneNumber = phoneNumber.replace( /(\()|(\))|(-)|(\.)|(\s)/gi, '' );
+			phoneNumber = parseInt( phoneNumber, 10 );
+
+			return phoneNumber;
 		},
 
 		saveAnswer : function() {
@@ -326,7 +385,8 @@
 				rawAnswerMap = {
 					text : this.generateTextAnswers,
 					radio : this.generateRadioAnswers,
-					email : this.generateTextAnswers
+					email : this.generateTextAnswers,
+					phone : this.generatePhoneAnswers
 				},
 				i;
 
@@ -351,6 +411,24 @@
 				storeAnswers.push( {
 					field : answerEls[ i ].name,
 					value : answerEls[ i ].value,
+					display : gc.app.selected.question.get( 'answers' )[ i ].display,
+					associated_question : gc.app.selected.question.get( 'question_name' )
+				} );
+			}
+
+			return storeAnswers;
+		},
+
+		generatePhoneAnswers : function() {
+			var i,
+				answerEls,
+				storeAnswers = [];
+
+			answerEls = this.$el.find( 'input' );
+			for ( i = 0; i < answerEls.length; i++ ) {
+				storeAnswers.push( {
+					field : answerEls[ i ].name,
+					value : this.trimPhoneValue( answerEls[ i ].value ),
 					display : gc.app.selected.question.get( 'answers' )[ i ].display,
 					associated_question : gc.app.selected.question.get( 'question_name' )
 				} );
@@ -474,4 +552,4 @@
 	gc.init( function() {
 		t.init();
 	} );
-} )( jQuery, tester, undefined );
+} )( jQuery, _, Backbone, Modernizr, tester );

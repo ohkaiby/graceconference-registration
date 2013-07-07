@@ -74,12 +74,18 @@ h3, h4 { font-weight: @buff; }
 	}
 }
 
+.form-container {
+	text-align: center;
+}
+
 #form,
 #answers {
 	.box-sizing();
 	display: inline-block;
 	padding-top: (@gutter-size / 3);
 	vertical-align: top;
+
+	text-align: left;
 }
 
 #form {
@@ -109,7 +115,7 @@ h3, h4 { font-weight: @buff; }
 	padding-bottom: @gutter-size;
 }
 
-.control-group { margin-bottom: @gutter-size; }
+.control-group { margin-bottom: (@gutter-size / 1.5); }
 .control-group:last-child { margin-bottom: 0; }
 
 .question-field,

@@ -1,4 +1,4 @@
-<form class="{{#text}}form-inline{{/text}}{{#radio}}form{{/radio}}">
+<form class="{{#text}}form-inline{{/text}}{{#radio}}form{{/radio}}" method="post">
 	<fieldset>
 		<legend class="question-title title">{{question}}</legend>
 
@@ -29,6 +29,19 @@
 				{{/answers}}
 			{{/email}}
 
+			{{#phone}}
+				<div class="alert alert-error">Please enter your primary phone number.</div>
+
+				{{#answers}}
+				<div class="control-group row-fluid">
+					<label class="question-field control-label span5" for="{{name}}">
+						{{display}}
+					</label>
+					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}">
+				</div>
+				{{/answers}}
+			{{/phone}}
+
 			{{#radio}}
 				<div class="alert alert-error">Please select an option.</div>
 
@@ -43,5 +56,6 @@
 
 		{{#text}}<button class="btn btn-large" type="submit">Next</button>{{/text}}
 		{{#email}}<button class="btn btn-large" type="submit">Next</button>{{/email}}
+		{{#phone}}<button class="btn btn-large" type="submit">Next</button>{{/phone}}
 	</fieldset>
 </form>
