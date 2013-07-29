@@ -180,6 +180,48 @@
 						{ name : 'state', display : 'State' },
 						{ name : 'zip', display : 'Zip' }
 					]
+				},
+
+				{
+					question_name : 'meal_plan',
+					question : 'Select the meals you would like prepared for you.',
+					answer_type : 'meal_plan',
+					answers : [
+						{
+							name : 'meal_plan_day_1',
+							display : 'Thursday',
+							date : '12/26/2013',
+							meals : { breakfast : false, lunch : false, dinner : true }
+						},
+
+						{
+							name : 'meal_plan_day_2',
+							display : 'Friday',
+							date : '12/27/2013',
+							meals : { breakfast : true, lunch : true, dinner : true }
+						},
+
+						{
+							name : 'meal_plan_day_3',
+							display : 'Saturday',
+							date : '12/28/2013',
+							meals : { breakfast : true, lunch : true, dinner : true }
+						},
+
+						{
+							name : 'meal_plan_day_4',
+							display : 'Sunday',
+							date : '12/29/2013',
+							meals : { breakfast : true, lunch : true, dinner : true }
+						},
+
+						{
+							name : 'meal_plan_day_4',
+							display : 'Monday',
+							date : '12/30/2013',
+							meals : { breakfast : true, lunch : true, dinner : false }
+						}
+					]
 				}
 			],
 			i;
@@ -293,7 +335,8 @@
 		el : '#form',
 		events : {
 			'submit form' : 'processAnswer',
-			'click .input-radio' : 'processAnswer'
+			'click .input-radio' : 'processAnswer',
+			'click .js-meal-plan-select-all' : 'allMeals'
 		},
 
 		initialize : function() {
@@ -461,6 +504,17 @@
 			} else {
 				collectedAnswers.push( new gc.models.answer( rawAnswer ) );
 			}
+		},
+
+		allMeals : function( ev ) {
+			var $allMealsCheckbox = $( ev.currentTarget ),
+				$allCheckboxes = this.$el.find( '.input-checkbox' ).filter( function() {
+					return this.id !== 'meal-plan-select-all-checkbox';
+				} );
+
+			$allCheckboxes.prop( 'checked', $allMealsCheckbox.is( ':checked' ) );
+
+			return true;
 		}
 	};
 

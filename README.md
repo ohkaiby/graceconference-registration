@@ -4,7 +4,7 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 ## Bootstrap Components
 
 ### Scaffolding (All)
-### Bass CSS (All except "code")
+### Base CSS (All except "code")
 
 ### Components
 * Alerts

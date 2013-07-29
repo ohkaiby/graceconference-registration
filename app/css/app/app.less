@@ -74,23 +74,15 @@ h3, h4 { font-weight: @buff; }
 	}
 }
 
-.form-container {
-	text-align: center;
-}
-
 #form,
 #answers {
 	.box-sizing();
 	display: inline-block;
 	padding-top: (@gutter-size / 3);
 	vertical-align: top;
-
-	text-align: left;
 }
 
 #form {
-	width: 59%; // using golden ratio
-
 	.alert {
 		display: none;
 	}
@@ -143,6 +135,20 @@ h3, h4 { font-weight: @buff; }
 
 .question-input {
 	padding: 5px;
+}
+
+.meal-plan {
+	& &-header,
+	& &-meal { text-align: center; }
+
+	.input-checkbox { margin: 0; }
+	&-select-all-container {
+		text-align: right;
+		margin-bottom: (@gutter-size / 1.5);
+	}
+	&-select-all {
+		margin: -2px 0 0 10px !important; // overwriting bootstrap
+	}
 }
 
 #answers {
