@@ -29,5 +29,5 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 * Dev vs. Prod environment configuration.
 * Precompiling Templates.
 * Add personality to the form’s questions
-* Fields: Meal plan, ToA
+* Fields: Workshops, ToA, Under-17 Agreement
 * Progress bar indication. Calculations.

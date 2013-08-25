@@ -4,8 +4,15 @@ $config = [];
 
 // database
 $config[ 'db_host' ] = '127.0.0.1';
+$config[ 'db_port' ] = '3306';
 $config[ 'db_name' ] = 'grace_2013_registration';
 $config[ 'db_user' ] = 'your_db_user_name';
 $config[ 'db_pass' ] = 'your_db_user_password';
+
+// environment
+$config[ 'environment' ] = 'development'; // development, test, stage, production
+$config[ 'debug' ] = (
+	in_array( $config[ 'environment' ], [ 'stage', 'production' ] )
+	) ? 0 : 3 ; // 0 = no errors shown. 3 = most verbose
 
 return $config;
