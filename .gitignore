@@ -35,3 +35,6 @@ dwsync.xml
 intermediate
 publish
 .idea
+
+# Specific to this app
+config.php

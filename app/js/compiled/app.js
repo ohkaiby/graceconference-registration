@@ -185,6 +185,7 @@
 				{
 					question_name : 'meal_plan',
 					question : 'Select the meals you would like prepared for you.',
+					display : 'Meals Registered',
 					answer_type : 'meal_plan',
 					answers : [
 						{
@@ -256,6 +257,13 @@
 					associated_question : question.question_name
 				} ) );
 			}
+		} else if ( question.answer_type === 'meal_plan' && ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) ) {
+			gc.app.answersCollection.add( new gc.models.answer( {
+				field : question.question_name,
+				value : savedAnswer,
+				display : question.display,
+				associated_question : question.question_name
+			} ) );
 		}
 	};
 
@@ -366,11 +374,18 @@
 		},
 
 		processAnswer : function() {
+			var invalidInputTypes = [ 'radio', 'checkbox' ],
+				$input;
+
 			if ( this.validateAnswer() ) {
 				this.saveAnswer().render();
 			} else {
+				$input = this.$el.find( 'input' ).first();
 				this.$el.find( '.alert' ).show();
-				this.$el.find( 'input' ).first().focus();
+
+				if ( $.inArray( $input[ 0 ].type, invalidInputTypes ) === -1 ) {
+					$input.focus();
+				}
 			}
 
 			// if it's the last answer, save to db.
@@ -384,7 +399,8 @@
 				validationFunctions = {
 					text : this.validateTextAnswers,
 					email : this.validateTextAnswers,
-					phone : this.validatePhone
+					phone : this.validatePhone,
+					meal_plan : this.validateMeals
 				};
 
 			if ( validationFunctions[ answerType ] ) {
@@ -413,6 +429,18 @@
 			return this.trimPhoneValue( phoneNumber ).toString().length === 10;
 		},
 
+		validateMeals : function() {
+			var $checkedBoxes = this.$el.find( '.input-checkbox:checked' ).filter( function() {
+					return this.id !== 'meal-plan-select-all-checkbox';
+				} );
+
+			if ( $checkedBoxes.length === 0 ) {
+				return window.confirm( 'Are you sure you don’t want to register for any meals? (Click OK if you are sure)');
+			}
+
+			return true;
+		},
+
 		trimPhoneValue : function( initialValue ) {
 			var phoneNumber = $.trim( initialValue );
 			phoneNumber = phoneNumber.replace( /(\()|(\))|(-)|(\.)|(\s)/gi, '' );
@@ -429,7 +457,8 @@
 					text : this.generateTextAnswers,
 					radio : this.generateRadioAnswers,
 					email : this.generateTextAnswers,
-					phone : this.generatePhoneAnswers
+					phone : this.generatePhoneAnswers,
+					meal_plan : this.generateMealAnswers
 				},
 				i;
 
@@ -492,6 +521,33 @@
 				field : questionName,
 				value : answerData.name,
 				display : questionDisplay,
+				associated_question : questionName
+			} ];
+		},
+
+		generateMealAnswers : function() {
+			var questionName = gc.app.selected.question.get( 'question_name' ),
+				$checkedBoxes = this.$el.find( '.input-checkbox:checked' ).filter( function() {
+					return this.id !== 'meal-plan-select-all-checkbox';
+				} ),
+				meals = {
+					meal_plan_day_1 : { dinner : false },
+					meal_plan_day_2 : { breakfast : false, lunch : false, dinner : false },
+					meal_plan_day_3 : { breakfast : false, lunch : false, dinner : false },
+					meal_plan_day_4 : { breakfast : false, lunch : false, dinner : false },
+					meal_plan_day_5 : { breakfast : false, lunch : false }
+				},
+				checkboxStr, i;
+
+			for ( i = 0; i < $checkedBoxes.length; i++ ) {
+				checkboxStr = $checkedBoxes[ i ].name.split( '_' );
+				meals[ 'meal_plan_day_' + checkboxStr[ 3 ] ][ checkboxStr[ 4 ] ] = true;
+			}
+
+			return [ {
+				field : questionName,
+				value : JSON.stringify( meals ),
+				display : gc.app.selected.question.get( 'display' ),
 				associated_question : questionName
 			} ];
 		},

@@ -70,7 +70,7 @@
 					<tbody>
 						{{#answers}}
 						<tr>
-							<td class="meal-plan-day">{{display}}</td>
+							<td class="meal-plan-day">{{display}} {{date}}</td>
 							{{#meals}}
 							<td class="meal-plan-meal">
 								{{#breakfast}}
@@ -92,6 +92,10 @@
 						{{/answers}}
 					</tbody>
 				</table>
+				<p>Breakfast = $5, Lunch = $7, Dinner = $8</p>
+				<p>Mariott and Holiday Inn Express provide free continental breakfasts, so if you happen to be staying there instead of Pheasant Run Resort, you won’t have to go hungry for skipping the breakfast meals above.</p>
+				<div id="meal-warning-modal" class="meal-warning-modal modal hide fade" role="dialog" aria-hidden="true">
+				</div>
 			{{/meal_plan}}
 		</div>
 
