@@ -10,6 +10,8 @@
 		gc.models.answer = Backbone.Model.extend( t.answersModelCore );
 		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
 
+		gc.app.workshopsCollection = new ( Backbone.Collection.extend( t.workshopsCollectionCore ) )();
+
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
 		gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
 		gc.app.answersView = new( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
@@ -18,8 +20,10 @@
 
 		gc.app.selected = {};
 
-		t.fillQuestions();
-		gc.app.formView.render();
+		gc.app.workshopsCollection.fetch().done( function() {
+			t.fillQuestions();
+			gc.app.formView.render();
+		} );
 	};
 
 	t.fillQuestions = function() {
@@ -227,6 +231,24 @@
 			],
 			i;
 
+		// adding workshops
+		questions.push( {
+			question_name : 'workshop_1',
+			question : 'Which workshop track would you like to attend from 1:30 – 3:30pm?',
+			display : 'Workshop 1:30pm',
+			answer_type : 'seminar',
+			answers : _.where( gc.app.workshopsCollection.toJSON(), { workshop_slot : 1 } )
+		} );
+
+		questions.push( {
+			question_name : 'workshop_2',
+			question : 'Which workshop track would you like to attend from 3:30 – 5pm?',
+			display : 'Workshop 3:30pm',
+			answer_type : 'seminar',
+			answers : _.where( gc.app.workshopsCollection.toJSON(), { workshop_slot : 2 } )
+		} );
+
+		// building questions
 		for ( i = 0; i < questions.length; i++ ) {
 			gc.app.questionsCollection.add( new gc.models.question( questions[ i ] ) );
 			t.fillSavedAnswer( questions[ i ] );
@@ -337,6 +359,14 @@
 
 	t.answersCollectionCore = { // collection of all answers
 
+	};
+
+	t.workshopsCollectionCore = {
+		url : '/api/get/workshops/',
+		parse : function( response ) {
+			console.log( response );
+			return response;
+		}
 	};
 
 	t.formViewCore = {

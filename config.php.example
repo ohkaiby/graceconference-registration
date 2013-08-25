@@ -11,8 +11,13 @@ $config[ 'db_pass' ] = 'your_db_user_password';
 
 // environment
 $config[ 'environment' ] = 'development'; // development, test, stage, production
-$config[ 'debug' ] = (
-	in_array( $config[ 'environment' ], [ 'stage', 'production' ] )
-	) ? 0 : 3 ; // 0 = no errors shown. 3 = most verbose
+
+if ( in_array( $config[ 'environment' ], [ 'stage', 'production' ] ) ) {
+	$config[ 'debug' ] = 0;
+	$config[ 'cache' ] = true;
+} else {
+	$config[ 'debug' ] = 3;
+	$config[ 'cache' ] = false;
+}
 
 return $config;

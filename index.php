@@ -15,7 +15,8 @@ $f3->mset( [
 
 		$config[ 'db_user' ],
 		$config[ 'db_pass' ]
-	)
+	),
+	'CACHE' => $config[ 'cache' ]
 ] );
 
 // controllers
@@ -23,6 +24,7 @@ $f3->mset( [
 $f3->set( 'AUTOLOAD', 'app/classes/' );
 $Get = new API\Get;
 $Set = new API\Set;
+$Cache = new Helpers\Cache;
 
 // api stuff
 
@@ -32,6 +34,8 @@ $f3->route( 'POST /api/set/@key/@value', function( $f3, $params ) {
 
 $f3->route( 'GET /api/get/@key [ajax]', function( $f3, $params ) {
 	global $Get;
+
+	header('Content-type: application/json');
 
 	echo $Get->get( $params[ 'key' ] );
 } );
