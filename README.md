@@ -26,8 +26,8 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 * Typeahead
 
 ## Things To Do
+* Calculate prices
 * Dev vs. Prod environment configuration.
 * Progress bar indication. Calculations.
-* Precompiling Templates.
 * Copy fonts from Google.
 * Add personality to the form’s questions

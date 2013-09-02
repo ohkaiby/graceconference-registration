@@ -11,7 +11,7 @@
 		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
-		gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
+		// gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
 		gc.app.answersView = new( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
 
 		gc.app.localstorage = new t.localStorageController();
@@ -47,7 +47,7 @@
 				{
 					question_name : 'age',
 					question : 'How old are you?',
-					display : 'How old',
+					display : 'Age',
 					answer_type : 'radio',
 					answers : [
 						{ name : '12_17', display : '12 to 17 years old' },
@@ -127,7 +127,7 @@
 					answer_type : 'radio',
 					answers : [
 						{ name : 'phone_is_mobile_yes', display : 'Yes, it’s a cell phone' },
-						{ name : 'phone_is_mobile_no', display : 'No, it’s not cell phone' }
+						{ name : 'phone_is_mobile_no', display : 'No, it’s not a cell phone' }
 					]
 				},
 
@@ -146,7 +146,7 @@
 				{
 					question_name : 'meal_plan',
 					question : 'Select the meals you would like prepared for you.',
-					display : 'Meals Registered',
+					display : 'Meals',
 					answer_type : 'meal_plan',
 					answers : [
 						{
@@ -276,7 +276,7 @@
 				display : question.display,
 				associated_question : question.question_name
 			} ) );
-		} else if ( question.answer_type === 'agreement' && gc.app.localstorage.load( question.question_name ) ) {
+		} else if ( gc.app.localstorage.load( question.question_name ) && ( question.answer_type === 'agreement' || question.answer_type === 'info' ) ) {
 			gc.app.answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : true,
@@ -325,7 +325,9 @@
 				i;
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
-				if ( questionType === 'text' || questionType === 'email' || questionType === 'phone' ) {
+				if ( questionType === 'text' ) {
+					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
+				} else if ( questionType === 'email' || questionType === 'phone' ) {
 					textAnswers = questionModel.get( 'answers' );
 
 					for ( i = 0; i < textAnswers.length; i++ ) {
@@ -361,7 +363,7 @@
 	};
 
 	t.formViewCore = {
-		el : '#form',
+		id : 'form',
 		events : {
 			'submit form' : 'processAnswer',
 			'click .input-radio' : 'processAnswer',
@@ -370,13 +372,19 @@
 
 		initialize : function() {
 			_.bindAll( this );
+
+			this.collection.on( 'reset', this.render );
 		},
 
 		render : function() {
 			var questionModel = gc.app.selected.question = this.collection.getFirstUnansweredQuestion();
 
+			if ( this.$el.parent().length === 0 ) {
+				this.$el.appendTo( '#view-container' );
+			}
+
 			if ( !questionModel ) { // all questions are answered
-				this.renderComplete();
+				this.renderCheckAnswers();
 			} else {
 				this.renderQuestion( questionModel.toJSON() );
 			}
@@ -390,8 +398,10 @@
 				find( 'input[type="text"], input[type="email"], input[type="tel"]' ).first().focus();
 		},
 
-		renderComplete : function() {
-			console.log( 'out of questions!' );
+		renderCheckAnswers : function() {
+			this.remove();
+
+			gc.app.answersView.render();
 		},
 
 		processAnswer : function() {
@@ -408,9 +418,6 @@
 					$input.focus();
 				}
 			}
-
-			// if it's the last answer, save to db.
-
 
 			return false;
 		},
@@ -616,29 +623,97 @@
 
 	t.answersViewCore = {
 		className : 'answers',
+		events : {
+			'click .js-correct' : 'processForm',
+			'click .js-incorrect' : 'resetForm'
+		},
 
 		initialize : function() {
 			_.bindAll( this );
-
-			this.collection.on( 'add', this.render );
-			this.collection.on( 'change', this.render );
-			this.collection.on( 'reset', this.reset );
 		},
 
 		render : function() {
 			this.$el.empty().append( gc.template( 'answers', this.generateTemplateVars() ) );
 
 			if ( this.$el.parent().length === 0 ) {
-				this.$el.appendTo( '#answers' );
+				this.$el.appendTo( '#view-container' );
 			}
 		},
 
-		generateTemplateVars : function() {
-			var stache = {
-					answers : this.collection.toJSON()
-				};
+		resetForm : function() {
+			this.$el.
+				remove().
+				empty();
 
-				return stache;
+			gc.app.localstorage.clear();
+			gc.app.answersCollection.reset();
+
+			return false;
+		},
+
+		generateTemplateVars : function() {
+			var rawAnswers = this.collection.toJSON(),
+				questions = gc.app.questionsCollection.toJSON(),
+				findQuestion = function( question ) { return question.question_name === tempAnswer.associated_question; },
+				genericGenerateAnswer = function( answer ) {
+					return { display : answer.display, value : answer.value };
+				},
+				answerTypeToGenerate = {
+					text : genericGenerateAnswer,
+					email : genericGenerateAnswer,
+					phone : genericGenerateAnswer,
+					radio : this.generateRadioAnswer,
+					meal_plan : this.generateMealAnswer
+				},
+				stache = {
+					answers : []
+				},
+				tempAnswer, i, tempQuestion;
+
+			for ( i = 0; i < rawAnswers.length; i++ ) {
+				tempAnswer = rawAnswers[ i ];
+				tempQuestion = _.find( questions, findQuestion );
+
+				if ( answerTypeToGenerate[ tempQuestion.answer_type ] ) {
+					stache.answers.push( answerTypeToGenerate[ tempQuestion.answer_type ]( tempAnswer, tempQuestion ) );
+				}
+			}
+
+			return stache;
+		},
+
+		generateRadioAnswer : function( answer, question ) {
+			var i;
+
+			for ( i = 0; i < question.answers.length; i++ ) {
+				if ( question.answers[ i ].name === answer.value ) {
+					return { display : question.display, value : question.answers[ i ].display };
+				}
+			}
+		},
+
+		generateMealAnswer : function( answer, question ) {
+			var registeredMeals = JSON.parse( answer.value ),
+				stringArr = [],
+				i, registeredMealsForDay, tempString, tempStringArr;
+
+			for ( i = 0; i < question.answers.length; i++ ) {
+				registeredMealsForDay = registeredMeals[ question.answers[ i ].name ];
+
+				tempString = question.answers[ i ].display +' ('+ question.answers[ i ].date +'): ';
+				tempStringArr = [];
+
+				if ( registeredMealsForDay.breakfast || registeredMealsForDay.lunch || registeredMealsForDay.dinner ) {
+					registeredMealsForDay.breakfast && tempStringArr.push( 'breakfast' );
+					registeredMealsForDay.lunch && tempStringArr.push( 'lunch' );
+					registeredMealsForDay.dinner && tempStringArr.push( 'dinner' );
+
+					tempString += tempStringArr.join( ', ' ) + '.';
+					stringArr.push( tempString );
+				}
+			}
+
+			return { display : question.display, value : stringArr.join( '<br>' ) };
 		},
 
 		reset : function() {
@@ -646,31 +721,31 @@
 		}
 	};
 
-	t.progressBarViewCore = {
-		el : '#progress',
+	// t.progressBarViewCore = {
+	// 	el : '#progress',
 
-		initialize : function() {
-			_.bindAll( this );
+	// 	initialize : function() {
+	// 		_.bindAll( this );
 
-			this.collection.on( 'add', this.render );
-			this.collection.on( 'change', this.render );
-			this.collection.on( 'reset', this.reset );
-		},
+	// 		this.collection.on( 'add', this.render );
+	// 		this.collection.on( 'change', this.render );
+	// 		this.collection.on( 'reset', this.reset );
+	// 	},
 
-		render : function() {
-			this.$el.
-				show().
-				find( '.bar' ).css( 'width', this.getPercentageComplete() + '%' );
-		},
+	// 	render : function() {
+	// 		this.$el.
+	// 			show().
+	// 			find( '.bar' ).css( 'width', this.getPercentageComplete() + '%' );
+	// 	},
 
-		getPercentageComplete : function() {
-			return 100; // TO DO
-		},
+	// 	getPercentageComplete : function() {
+	// 		return 100; // TO DO
+	// 	},
 
-		reset : function() {
-			this.$el.hide();
-		}
-	};
+	// 	reset : function() {
+	// 		this.$el.hide();
+	// 	}
+	// };
 
 	t.localStorageController = function() {
 		this.save = function( key, value ) {

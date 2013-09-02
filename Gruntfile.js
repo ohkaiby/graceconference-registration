@@ -81,6 +81,7 @@ module.exports = function( grunt ) {
 				eqnull: true,
 				browser: true,
 				expr : true,
+				smarttabs: true,
 				globals: {
 					module : false,
 					require : false,

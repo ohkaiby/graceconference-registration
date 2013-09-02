@@ -74,15 +74,11 @@ h3, h4 { font-weight: @buff; }
 	}
 }
 
-#form,
-#answers {
+#form {
 	.box-sizing();
-	display: inline-block;
 	padding-top: (@gutter-size / 3);
 	vertical-align: top;
-}
 
-#form {
 	.alert {
 		display: none;
 	}
@@ -151,38 +147,6 @@ h3, h4 { font-weight: @buff; }
 	}
 }
 
-#answers {
-	.box-sizing();
-	width: 36%;
-	margin-left: @gutter-size;
-	padding-left: @gutter-size;
-	padding-right: @gutter-size;
-
-	.subtitle {
-		margin-bottom: 0;
-		padding: 10px 0;
-		font-weight: normal;
-		letter-spacing: 1px;
-		text-transform: uppercase;
-	}
-
-	.field,
-	.value {
-		width: 50%;
-		padding-bottom: 5px;
-		font-size: @smaller-font-size;
-	}
-
-	.field {
-		.box-sizing();
-		padding-right: @gutter-size;
-	}
-
-	.value {
-		color: @subtle-text;
-	}
-}
-
 #grace-registration-form {
 	line-height: @default-line-height;
 	margin-top: @gutter-size;
@@ -191,8 +155,6 @@ h3, h4 { font-weight: @buff; }
 		font-size: @default-font-size;
 		font-family: @sans-serif;
 	}
-
-	
 
 	legend {
 		margin-top: (@gutter-size * 1.5);
@@ -241,9 +203,9 @@ h3, h4 { font-weight: @buff; }
 			margin-left: @gutter-size;
 		}
 	}
-
-
 }
+
+.btn { margin-right: @gutter-size; }
 
 .agreement {
 	padding-top: @gutter-size;
@@ -253,6 +215,14 @@ h3, h4 { font-weight: @buff; }
 }
 
 .info-wrapper { margin-bottom: @gutter-size; }
+
+.answers {
+	line-height: 1.5;
+	&-field { padding-right: @gutter-size; width: 40%; }
+	&-field, &-value { padding-bottom: 10px; vertical-align: top; }
+
+	&-buttons { padding-top: @gutter-size; }
+}
 
 // Large desktop
 @media (min-width: 1200px) {

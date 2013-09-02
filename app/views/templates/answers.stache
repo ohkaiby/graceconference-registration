@@ -1,11 +1,16 @@
-<h2 class="subtitle">Your Info</h2>
-<div class="info">
-	<table class="info-table">
+<div class="answers">
+	<h4 class="answers-subtitle">Is this information correct?</h4>
+	<table class="answers-table">
 		{{#answers}}
-			<tr>
-				<td class="field">{{display}}</td>
-				<td class="value">{{value}}</td>
+			<tr class="answers-row">
+				<td class="answers-field">{{display}}</td>
+				<td class="answers-value">{{{value}}}</td>
 			</tr>
 		{{/answers}}
 	</table>
+
+	<div class="button-wrapper answers-buttons">
+		<button class="btn btn-large js-correct" type="submit">Yes, It’s Correct</button>
+		<button class="btn btn-large js-incorrect" type="submit">No, Restart Form</button>
+	</div>
 </div>
