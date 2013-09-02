@@ -27,7 +27,7 @@ Barebones html / form for presenting the GRACE 2013 Registration.
 
 ## Things To Do
 * Dev vs. Prod environment configuration.
-* Precompiling Templates.
-* Add personality to the form’s questions
-* Fields: Workshops, ToA, Under-17 Agreement
 * Progress bar indication. Calculations.
+* Precompiling Templates.
+* Copy fonts from Google.
+* Add personality to the form’s questions

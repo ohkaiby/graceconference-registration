@@ -24,6 +24,7 @@ class Get {
 		global $Cache;
 
 		$results = $Cache->get( 'workshops' );
+
 		if ( $results === false ) {
 			$results = $this->db->exec( '
 				SELECT
@@ -40,8 +41,7 @@ class Get {
 					workshops w LEFT JOIN
 					speakers s
 				ON
-					w.speaker_id = s.id;'
-			);
+					w.speaker_id = s.id;' );
 		}
 
 		$Cache->set( 'workshops', $results );

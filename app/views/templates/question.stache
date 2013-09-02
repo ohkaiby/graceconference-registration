@@ -2,8 +2,8 @@
 	<fieldset>
 		<legend class="question-title title">{{question}}</legend>
 
-		<div class="fields">
 			{{#text}}
+			<div class="fields">
 				<div class="alert alert-error">Please fill all fields.</div>
 
 				{{#answers}}
@@ -14,9 +14,12 @@
 					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}">
 				</div>
 				{{/answers}}
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
 			{{/text}}
 
 			{{#email}}
+			<div class="fields">
 				<div class="alert alert-error">Please enter your email.</div>
 
 				{{#answers}}
@@ -27,9 +30,12 @@
 					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}">
 				</div>
 				{{/answers}}
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
 			{{/email}}
 
 			{{#phone}}
+			<div class="fields">
 				<div class="alert alert-error">Please enter your primary phone number.</div>
 
 				{{#answers}}
@@ -40,9 +46,12 @@
 					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}">
 				</div>
 				{{/answers}}
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
 			{{/phone}}
 
 			{{#radio}}
+			<div class="fields">
 				<div class="alert alert-error">Please select an option.</div>
 
 				{{#answers}}
@@ -51,9 +60,11 @@
 					{{display}}
 				</label>
 				{{/answers}}
+			</div>
 			{{/radio}}
 
 			{{#meal_plan}}
+			<div class="fields">
 				<div class="meal-plan-select-all-container control-group row-fluid">
 					<label for="meal-plan-select-all-checkbox" class="control-label">
 						All meals
@@ -94,11 +105,69 @@
 				</table>
 				<p>Breakfast = $5, Lunch = $7, Dinner = $8</p>
 				<p>Mariott and Holiday Inn Express provide free continental breakfasts, so if you happen to be staying there instead of Pheasant Run Resort, you won’t have to go hungry for skipping the breakfast meals above.</p>
-				<div id="meal-warning-modal" class="meal-warning-modal modal hide fade" role="dialog" aria-hidden="true">
-				</div>
+				<div id="meal-warning-modal" class="meal-warning-modal modal hide fade" role="dialog" aria-hidden="true"></div>
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
 			{{/meal_plan}}
-		</div>
 
-		{{^radio}}<button class="btn btn-large" type="submit">Next</button>{{/radio}}
+			{{#agreement}}
+			<div class="agreement">
+				<h4 class="agreement-title">GRACE 2013 Conference Guidelines and Expectations</h4>
+
+				<p class="agreement-text">
+					Let us honor God and each other. For the Conference and all attendees, the guidelines below are important to follow in order to have the most enjoyable experience. As guests of the hotel, we should do our best to bear witness as followers of Jesus. Please follow the guidelines set forth so that we can bless each other and the hotel staff.
+				</p>
+
+				<h4 class="agreement-title">Guidelines and Rules</h4>
+				<ol class="agreement-list">
+					<li class="agreement-list-item">
+						Conference Participation. Please attend EVERY session listed according to schedule and/or announced. Please wear your name tag at all times. Tell your small group leaders in case of sickness, and they will notify the appropriate conference director of your name and room number. A curfew is enforced so that everyone is well-rested and refreshed for the next day.
+					</li>
+					<li class="agreement-list-item">
+						Hotel Rooms and Other Areas. Be in your hotel room with the lights out by the assigned time. Hotel rooms are only to be used for sleeping at night or taking private naps during free-time. Socializing and all other activities must take place in a public area of the hotel. Unless you are legally married or are staying with your family, in absolutely no situation is one gender allowed to enter the room of the opposite gender (i.e. co-ed visitors). The guest rooms are intended for use by registered guests only and rooms will not be occupied by more than (4) adults.*  No cooking is allowed in any guest room or public area of the hotel. This includes the use of hotplates and/or Panini style cooking grills.* Please pick up and clean up after yourself, especially during and after meals.
+					</li>
+					<li class="agreement-list-item">
+						Hotel Property. Please do not tamper with fire extinguishers, fire alarms, plants, and other hotel property. Keep all hotel items (e.g. furniture/bedding) in their original rooms or the lobby to avoid fines. Please respect the hotel staff and the signs posted by the hotel.
+					</li>
+					<li class="agreement-list-item">
+						Minors. Stay in the hotel at all times during the Conference. If you are leaving with your parents, please let your small group leader know. The hotel requires all minors (under the age of 18) to be under adult supervision at all times and are not to be left unattended. If you are in this age bracket, please remain in the large group setting until your parent(s) or guardian comes for you after each session. Do not wander alone or explore the hotel.
+					</li>
+					<li class="agreement-list-item">
+						Dress. Avoid wearing revealing clothing or super-loose or low-riding clothing that might, for example, reveal your underclothing.. You will be asked to adjust your attire by a leader if it is deemed inappropriate. Furthermore, we ask that you do not come out to socialize in public in the evening unless you are properly attired (i.e., not in your pajamas and swimsuit). This includes the swimming pool area as this is a family conference. Do not walk about the hotel in your swimming attire. Cover yourself with a long towel or by wearing a shirt over your swimsuit. Absolutely no thongs or teeny bikinis allowed.
+					</li>
+					<li class="agreement-list-item">
+						Safety. Do not run on hotel premises, especially around the pool area. Items, such as water balloons, water guns, or fireworks, are not permitted. These items (and others that are deemed dangerous by a small group leader or administrator) are not allowed and will be confiscated if found. Absolutely no pranks, horsing around, or roughhousing. This is not youth camp.
+					</li>
+					<li class="agreement-list-item">
+						Electronics. Throughout the entire Conference, silence/turn off cell phones during all sessions and activities. You may use it only under emergency circumstances. The Conference Leaders reserve the right to temporarily confiscate these electronics, including MP3 players, laptops, netbooks, tablets, and other multi-media devices should they become problematic. Note: We encourage everyone to bring their own hard copy of the Bible instead of using their electronic device(s).
+					</li>
+					<li class="agreement-list-item">
+						Controlled Substances. Smoking, alcoholic beverages, and the use of nonprescription controlled substances are against the policies of the Conference. The hotel itself is also 100% smoke-free and the hotel will impose a fee of $150 if there is smoking in the room.
+					</li>
+					<li class="agreement-list-item">
+						No Stealing. This includes hotel property (think pens and towels), property of the Conference (think shirts and meals not paid for), and property of others (think phones and booklets). And do not be wasteful—we all need to be faithful stewards because EVERYTHING belongs to God.
+					</li>
+					<li class="agreement-list-item">
+						No Solicitation. You may not solicit friendships for personal gains and/or profit while you attend the GRACE Conference.
+					</li>
+				</ol>
+
+				<p class="agreement-text">
+					*These are hotel imposed rules and policies, and must be followed just as conference rules and policies. Please be advised that any infractions of the above rules will result in disciplinary action and possible dismissal.
+				</p>
+			</div>
+
+			<button class="btn btn-large" type="submit">I Agree</button>
+			{{/agreement}}
+
+			{{#info}}
+				<div class="info-wrapper">
+				{{#answers}}
+					{{#html}}{{{html}}}{{/html}}
+				{{/answers}}
+				</div>
+
+				<button class="btn btn-large" type="submit">Next</button>
+			{{/info}}
 	</fieldset>
 </form>

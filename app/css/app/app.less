@@ -242,12 +242,17 @@ h3, h4 { font-weight: @buff; }
 		}
 	}
 
-	#church {
-		.church-no {
-			margin-left: @gutter-size;
-		}
-	}
+
 }
+
+.agreement {
+	padding-top: @gutter-size;
+	// &-title { margin-top: 0; padding-top: @gutter-size; }
+	&-text { margin-bottom: @gutter-size; }
+	&-list-item { margin-bottom: 1em; }
+}
+
+.info-wrapper { margin-bottom: @gutter-size; }
 
 // Large desktop
 @media (min-width: 1200px) {

@@ -10,8 +10,6 @@
 		gc.models.answer = Backbone.Model.extend( t.answersModelCore );
 		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
 
-		gc.app.workshopsCollection = new ( Backbone.Collection.extend( t.workshopsCollectionCore ) )();
-
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
 		gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
 		gc.app.answersView = new( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
@@ -20,10 +18,8 @@
 
 		gc.app.selected = {};
 
-		gc.app.workshopsCollection.fetch().done( function() {
-			t.fillQuestions();
-			gc.app.formView.render();
-		} );
+		t.fillQuestions();
+		gc.app.formView.render();
 	};
 
 	t.fillQuestions = function() {
@@ -116,45 +112,6 @@
 				},
 
 				{
-					question_name : 'toddlers',
-					question : 'Are you bringing any toddlers?',
-					display : 'Bringing toddlers',
-					answer_type : 'radio',
-					answers : [
-						{ name : 'yes', display : 'Yes' },
-						{ name : 'no', display : 'No' }
-					],
-					depends_on : {
-						question_name : 'status',
-						answer_names : [ 'single', 'married' ]
-					}
-				},
-
-				{
-					question_name : 'how_many_toddlers',
-					question : 'How many toddlers are you bringing?',
-					answer_type : 'text',
-					answers : [
-						{ name : 'how_many_toddlers', display : '# of toddlers' }
-					],
-					depends_on : {
-						question_name : 'toddlers',
-						answer_names : [ 'yes' ]
-					}
-				},
-
-				{
-					question_name : 'church_attendance',
-					question : 'Are you attending church services regularly?',
-					display : 'Attending church',
-					answer_type : 'radio',
-					answers : [
-						{ name : 'church_yes', display : 'Yes, I attend church regularly' },
-						{ name : 'church_no', display : 'No, I don’t attend church regularly' }
-					]
-				},
-
-				{
 					question_name : 'phone',
 					question : 'What’s your phone number?',
 					answer_type : 'phone',
@@ -227,26 +184,59 @@
 							meals : { breakfast : true, lunch : true, dinner : false }
 						}
 					]
+				},
+
+				{
+					question_name : 'permission_slip',
+					answer_type : 'info',
+					answers : [
+						{
+							html : '<h4>You are required to have a parent or guardian read, sign, and mail a completed copy of the <a href="https://docs.google.com/document/d/1s8uqx7hFiYQ1w8OEk47tUn0tG8wwrT9uz0n7hcOkdgA" class="info-link" target="_blank">Grace 2013 Permission Slip</a> to CCLiFe, 670 Bonded Parkway, Streamwood, IL 60107.</h4>'
+						}
+					],
+					depends_on : {
+						question_name : 'age',
+						answer_names : [ '12_17' ]
+					}
+				},
+
+				{
+					question_name : 'hotel_code_of_conduct',
+					question : 'Please read & agree to the Pheasant Run Resort Code of Conduct.',
+					display : 'Agreed to Code of Conduct',
+					answer_type : 'agreement',
+					answers : []
+				},
+
+				{
+					question_name : 'toddlers',
+					question : 'Are you bringing any children?',
+					display : 'Bringing children',
+					answer_type : 'radio',
+					answers : [
+						{ name : 'yes', display : 'Yes' },
+						{ name : 'no', display : 'No' }
+					],
+					depends_on : {
+						question_name : 'status',
+						answer_names : [ 'single', 'married' ]
+					}
+				},
+
+				{
+					question_name : 'how_many_toddlers',
+					question : 'How many children are you bringing?',
+					answer_type : 'text',
+					answers : [
+						{ name : 'how_many_toddlers', display : '# of children' }
+					],
+					depends_on : {
+						question_name : 'toddlers',
+						answer_names : [ 'yes' ]
+					}
 				}
 			],
 			i;
-
-		// adding workshops
-		questions.push( {
-			question_name : 'workshop_1',
-			question : 'Which workshop track would you like to attend from 1:30 – 3:30pm?',
-			display : 'Workshop 1:30pm',
-			answer_type : 'seminar',
-			answers : _.where( gc.app.workshopsCollection.toJSON(), { workshop_slot : 1 } )
-		} );
-
-		questions.push( {
-			question_name : 'workshop_2',
-			question : 'Which workshop track would you like to attend from 3:30 – 5pm?',
-			display : 'Workshop 3:30pm',
-			answer_type : 'seminar',
-			answers : _.where( gc.app.workshopsCollection.toJSON(), { workshop_slot : 2 } )
-		} );
 
 		// building questions
 		for ( i = 0; i < questions.length; i++ ) {
@@ -283,6 +273,13 @@
 			gc.app.answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : savedAnswer,
+				display : question.display,
+				associated_question : question.question_name
+			} ) );
+		} else if ( question.answer_type === 'agreement' && gc.app.localstorage.load( question.question_name ) ) {
+			gc.app.answersCollection.add( new gc.models.answer( {
+				field : question.question_name,
+				value : true,
 				display : question.display,
 				associated_question : question.question_name
 			} ) );
@@ -339,6 +336,8 @@
 					}
 				} else if ( questionType === 'radio' ) {
 					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } ); // the dependent question that we've saved
+				} else if ( questionType === 'info' ) {
+					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
 				}
 
 				return ( savedDependentQuestion && $.inArray( savedDependentQuestion.get( 'value' ), answerCurrentQuestionDependsOn.answer_names ) !== -1 ) ? true : false;
@@ -359,14 +358,6 @@
 
 	t.answersCollectionCore = { // collection of all answers
 
-	};
-
-	t.workshopsCollectionCore = {
-		url : '/api/get/workshops/',
-		parse : function( response ) {
-			console.log( response );
-			return response;
-		}
 	};
 
 	t.formViewCore = {
@@ -426,11 +417,14 @@
 
 		validateAnswer : function() {
 			var answerType = gc.app.selected.question.get( 'answer_type' ),
+				genericValidate = function() { return true ; },
 				validationFunctions = {
 					text : this.validateTextAnswers,
 					email : this.validateTextAnswers,
 					phone : this.validatePhone,
-					meal_plan : this.validateMeals
+					meal_plan : this.validateMeals,
+					agreement : genericValidate,
+					info : genericValidate
 				};
 
 			if ( validationFunctions[ answerType ] ) {
@@ -456,7 +450,7 @@
 		validatePhone : function() {
 			var phoneNumber = this.$el.find( 'input[type="tel"]' ).val();
 
-			return this.trimPhoneValue( phoneNumber ).toString().length === 10;
+			return this.trimPhoneValue( phoneNumber ).length === 10;
 		},
 
 		validateMeals : function() {
@@ -474,7 +468,11 @@
 		trimPhoneValue : function( initialValue ) {
 			var phoneNumber = $.trim( initialValue );
 			phoneNumber = phoneNumber.replace( /(\()|(\))|(-)|(\.)|(\s)/gi, '' );
-			phoneNumber = parseInt( phoneNumber, 10 );
+			phoneNumber = parseInt( phoneNumber, 10 ).toString();
+
+			if ( phoneNumber[ 0 ] === '1' ) {
+				phoneNumber = phoneNumber.substring( 1 );
+			}
 
 			return phoneNumber;
 		},
@@ -483,12 +481,24 @@
 			var rawAnswers = [],
 				answersFormattedForCollection = [],
 				answerType = gc.app.selected.question.get( 'answer_type' ),
+				genericAnswerFunc = function() {
+					var question = gc.app.selected.question;
+
+					return [ {
+						field : question.attributes.question_name,
+						value : true,
+						display : question.attributes.display,
+						associated_question : question.attributes.question_name
+					} ];
+				},
 				rawAnswerMap = {
 					text : this.generateTextAnswers,
 					radio : this.generateRadioAnswers,
 					email : this.generateTextAnswers,
 					phone : this.generatePhoneAnswers,
-					meal_plan : this.generateMealAnswers
+					meal_plan : this.generateMealAnswers,
+					agreement : genericAnswerFunc,
+					info : genericAnswerFunc
 				},
 				i;
 
