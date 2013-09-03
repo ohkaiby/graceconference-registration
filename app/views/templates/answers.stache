@@ -11,6 +11,6 @@
 
 	<div class="button-wrapper answers-buttons">
 		<button class="btn btn-large js-correct" type="submit">Yes, It’s Correct</button>
-		<button class="btn btn-large js-incorrect" type="submit">No, Restart Form</button>
+		<button class="btn btn-large js-incorrect" type="submit">No, Start Over</button>
 	</div>
 </div>

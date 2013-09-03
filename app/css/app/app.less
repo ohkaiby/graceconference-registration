@@ -224,9 +224,30 @@ h3, h4 { font-weight: @buff; }
 	&-buttons { padding-top: @gutter-size; }
 }
 
+.children {
+	.question-field,
+	.question-input { vertical-align: middle; margin-bottom: 0; }
+
+	.question-field {
+		display: inline-block;
+		float: none;
+		width: auto;
+		margin-left: 0;
+		padding-right: 10px;
+	}
+
+	.question-input { margin-right: 30px; max-width: 60%; }
+}
+
 // Large desktop
 @media (min-width: 1200px) {
 
+}
+
+@media (max-width: 979px) {
+	.children {
+		.question-field { width: (@gutter-size * 2); padding-right: 0; }
+	}
 }
 
 // Portrait tablet to landscape and desktop

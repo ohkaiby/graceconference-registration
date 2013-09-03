@@ -17,6 +17,7 @@
 		gc.app.localstorage = new t.localStorageController();
 
 		gc.app.selected = {};
+		gc.app.resetForm = t.resetForm;
 
 		t.fillQuestions();
 		gc.app.formView.render();
@@ -201,14 +202,6 @@
 				},
 
 				{
-					question_name : 'hotel_code_of_conduct',
-					question : 'Please read & agree to the Pheasant Run Resort Code of Conduct.',
-					display : 'Agreed to Code of Conduct',
-					answer_type : 'agreement',
-					answers : []
-				},
-
-				{
 					question_name : 'toddlers',
 					question : 'Are you bringing any children?',
 					display : 'Bringing children',
@@ -224,16 +217,26 @@
 				},
 
 				{
-					question_name : 'how_many_toddlers',
-					question : 'How many children are you bringing?',
-					answer_type : 'text',
+					question_name : 'children_details',
+					display : 'Children',
+					question : 'Please list your children.',
+					answer_type : 'children',
 					answers : [
-						{ name : 'how_many_toddlers', display : '# of children' }
+						{ name : 'name', display : 'Name' },
+						{ name : 'age', display : 'Age' }
 					],
 					depends_on : {
 						question_name : 'toddlers',
 						answer_names : [ 'yes' ]
 					}
+				},
+
+				{
+					question_name : 'hotel_code_of_conduct',
+					question : 'Please read & agree to the Pheasant Run Resort Code of Conduct.',
+					display : 'Agreed to Code of Conduct',
+					answer_type : 'agreement',
+					answers : []
 				}
 			],
 			i;
@@ -260,16 +263,10 @@
 					} ) );
 				}
 			}
-		} else if ( question.answer_type === 'radio' ) {
-			if ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) {
-				gc.app.answersCollection.add( new gc.models.answer( {
-					field : question.question_name,
-					value : savedAnswer,
-					display : question.display,
-					associated_question : question.question_name
-				} ) );
-			}
-		} else if ( question.answer_type === 'meal_plan' && ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) ) {
+		} else if (
+				( question.answer_type === 'radio' || question.answer_type === 'meal_plan' || question.answer_type === 'children' ) &&
+				( savedAnswer = gc.app.localstorage.load( question.question_name ) )
+		) {
 			gc.app.answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : savedAnswer,
@@ -284,6 +281,11 @@
 				associated_question : question.question_name
 			} ) );
 		}
+	};
+
+	t.resetForm = function() {
+		gc.app.localstorage.clear();
+		gc.app.answersCollection.reset();
 	};
 
 	t.questionsModelCore = { // a single question
@@ -325,7 +327,7 @@
 				i;
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
-				if ( questionType === 'text' ) {
+				if ( questionType === 'text' || questionType === 'radio' || questionType === 'info' || questionType === 'children' ) {
 					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
 				} else if ( questionType === 'email' || questionType === 'phone' ) {
 					textAnswers = questionModel.get( 'answers' );
@@ -336,10 +338,6 @@
 							break;
 						}
 					}
-				} else if ( questionType === 'radio' ) {
-					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } ); // the dependent question that we've saved
-				} else if ( questionType === 'info' ) {
-					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
 				}
 
 				return ( savedDependentQuestion && $.inArray( savedDependentQuestion.get( 'value' ), answerCurrentQuestionDependsOn.answer_names ) !== -1 ) ? true : false;
@@ -367,13 +365,14 @@
 		events : {
 			'submit form' : 'processAnswer',
 			'click .input-radio' : 'processAnswer',
-			'click .js-meal-plan-select-all' : 'allMeals'
+			'click .js-meal-plan-select-all' : 'allMeals',
+			'click .js-add-child' : 'addChild'
 		},
 
 		initialize : function() {
 			_.bindAll( this );
 
-			this.collection.on( 'reset', this.render );
+			gc.app.answersCollection.on( 'reset', this.render );
 		},
 
 		render : function() {
@@ -405,18 +404,10 @@
 		},
 
 		processAnswer : function() {
-			var invalidInputTypes = [ 'radio', 'checkbox' ],
-				$input;
-
 			if ( this.validateAnswer() ) {
 				this.saveAnswer().render();
 			} else {
-				$input = this.$el.find( 'input' ).first();
 				this.$el.find( '.alert' ).show();
-
-				if ( $.inArray( $input[ 0 ].type, invalidInputTypes ) === -1 ) {
-					$input.focus();
-				}
 			}
 
 			return false;
@@ -431,7 +422,8 @@
 					phone : this.validatePhone,
 					meal_plan : this.validateMeals,
 					agreement : genericValidate,
-					info : genericValidate
+					info : genericValidate,
+					children : this.validateChildren
 				};
 
 			if ( validationFunctions[ answerType ] ) {
@@ -447,6 +439,7 @@
 
 			for ( i = 0; i < $inputEls.length; i++ ) {
 				if ( _.isEmpty( $.trim( $inputEls[ i ].value ) ) ) {
+					$( $inputEls[ i ] ).focus();
 					return false;
 				}
 			}
@@ -455,9 +448,15 @@
 		},
 
 		validatePhone : function() {
-			var phoneNumber = this.$el.find( 'input[type="tel"]' ).val();
+			var $phone = this.$el.find( 'input[type="tel"]' ),
+				phoneNumber = $phone.val();
 
-			return this.trimPhoneValue( phoneNumber ).length === 10;
+			if ( this.trimPhoneValue( phoneNumber ).length !== 10 ) {
+				$phone.focus();
+				return false;
+			}
+
+			return true;
 		},
 
 		validateMeals : function() {
@@ -470,6 +469,33 @@
 			}
 
 			return true;
+		},
+
+		validateChildren : function() {
+			var $inputEls = this.$el.find( 'input' ),
+				allInputsAreEmpty = true,
+				nameInputVal, ageInputVal, i;
+
+			for ( i = 0; i < $inputEls.length; i++ ) {
+				if ( i % 2 === 0 ) { // name input
+					nameInputVal = $.trim( $inputEls[ i ].value );
+					ageInputVal = parseInt( $.trim( $inputEls[ i + 1 ].value ), 10 );
+				} else { // age input
+					ageInputVal = parseInt( $.trim( $inputEls[ i ].value ), 10 );
+					nameInputVal = $.trim( $inputEls[ i - 1 ].value );
+				}
+
+				if (
+						( _.isEmpty( nameInputVal ) && !_.isNaN( ageInputVal ) ) ||
+						( !_.isEmpty( nameInputVal ) && _.isNaN( ageInputVal ) )
+				) {
+					return false;
+				} else if ( !_.isEmpty( nameInputVal ) && !_.isNaN( ageInputVal ) ) {
+					allInputsAreEmpty = false;
+				}
+			}
+
+			return !allInputsAreEmpty;
 		},
 
 		trimPhoneValue : function( initialValue ) {
@@ -505,7 +531,8 @@
 					phone : this.generatePhoneAnswers,
 					meal_plan : this.generateMealAnswers,
 					agreement : genericAnswerFunc,
-					info : genericAnswerFunc
+					info : genericAnswerFunc,
+					children : this.generateChildrenAnswers
 				},
 				i;
 
@@ -522,10 +549,9 @@
 
 		generateTextAnswers : function() {
 			var i,
-				answerEls,
+				answerEls = this.$el.find( 'input' ),
 				storeAnswers = [];
 
-			answerEls = this.$el.find( 'input' );
 			for ( i = 0; i < answerEls.length; i++ ) {
 				storeAnswers.push( {
 					field : answerEls[ i ].name,
@@ -599,6 +625,34 @@
 			} ];
 		},
 
+		generateChildrenAnswers : function() {
+			var questionName = gc.app.selected.question.get( 'question_name' ),
+				$inputs = this.$el.find( 'input[type="text"]' ),
+				children = [],
+				i, tempChild, $tempInput, $tempInput2;
+
+			for ( i = 0; i < $inputs.length; i+=2 ) {
+				tempChild = {};
+				$tempInput = $( $inputs[ i ] );
+				$tempInput2 = $( $inputs[ i + 1 ] );
+
+				tempChild[ $tempInput.data( 'type' ) ] = $tempInput.val();
+				tempChild[ $tempInput2.data( 'type' ) ] = $tempInput2.val();
+				tempChild.age = parseInt( tempChild.age, 10 );
+
+				if ( !_.isEmpty( tempChild.name ) && !_.isNaN( tempChild.age ) ) {
+					children.push( tempChild );
+				}
+			}
+
+			return [ {
+				field : questionName,
+				value : JSON.stringify( children ),
+				display : gc.app.selected.question.get( 'display' ),
+				associated_question : questionName
+			} ];
+		},
+
 		addAnswer : function( rawAnswer, collectedAnswers ) {
 			var existingAnswer;
 
@@ -618,6 +672,20 @@
 			$allCheckboxes.prop( 'checked', $allMealsCheckbox.is( ':checked' ) );
 
 			return true;
+		},
+
+		addChild : function() {
+			var $children = this.$el.find( '.children' ).first(),
+				$clone = $children.clone(),
+				$clonedInputs = $clone.find( 'input[type="text"]' ),
+				i;
+
+			for ( i = 0; i < $clonedInputs.length; i++ ) {
+				$clonedInputs[ i ].value = "";
+			}
+
+			$clone.insertAfter( $children );
+			return false;
 		}
 	};
 
@@ -641,12 +709,14 @@
 		},
 
 		resetForm : function() {
-			this.$el.
-				remove().
-				empty();
+			this.$el.remove().empty();
 
-			gc.app.localstorage.clear();
-			gc.app.answersCollection.reset();
+			gc.app.resetForm();
+
+			return false;
+		},
+
+		processForm : function() {
 
 			return false;
 		},
@@ -663,7 +733,8 @@
 					email : genericGenerateAnswer,
 					phone : genericGenerateAnswer,
 					radio : this.generateRadioAnswer,
-					meal_plan : this.generateMealAnswer
+					meal_plan : this.generateMealAnswer,
+					children : this.generateChildrenAnswer
 				},
 				stache = {
 					answers : []
@@ -716,8 +787,26 @@
 			return { display : question.display, value : stringArr.join( '<br>' ) };
 		},
 
+		generateChildrenAnswer : function( answer, question ) {
+			var children = JSON.parse( answer.value ),
+				stringArr = [],
+				i;
+
+			for ( i = 0; i < children.length; i++ ) {
+				stringArr.push( children[ i ].name + ' (age '+ children[ i ].age +')' );
+			}
+
+			return { display : question.display, value : stringArr.join( '<br>' ) };
+		},
+
 		reset : function() {
 			this.$el.empty();
+		}
+	};
+
+	t.completionViewCore = {
+		initialize : function() {
+			_.bindAll( this );
 		}
 	};
 

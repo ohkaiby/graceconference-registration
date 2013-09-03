@@ -18,6 +18,24 @@
 			<button class="btn btn-large" type="submit">Next</button>
 			{{/text}}
 
+			{{#children}}
+			<div class="fields">
+				<div class="alert alert-error">Please list your child’s info.</div>
+
+				<div class="children control-group row-fluid">
+					{{#answers}}
+					<label class="question-field control-label span2">
+						{{display}}
+					</label>
+					<input type="text" class="question-input text span4" data-type="{{name}}">
+					<br class="hidden-desktop">
+					{{/answers}}
+				</div>
+				<a class="children-add js-add-child" href="javascript:void(0);">Add another child</a>
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
+			{{/children}}
+
 			{{#email}}
 			<div class="fields">
 				<div class="alert alert-error">Please enter your email.</div>
