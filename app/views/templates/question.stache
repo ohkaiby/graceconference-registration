@@ -103,17 +103,17 @@
 							{{#meals}}
 							<td class="meal-plan-meal">
 								{{#breakfast}}
-								<input type="checkbox" class="input-checkbox" name="{{name}}_breakfast">
+								<input type="checkbox" class="js-meal-checkbox input-checkbox" name="{{name}}_breakfast" data-type="breakfast">
 								{{/breakfast}}
 							</td>
 							<td class="meal-plan-meal">
 								{{#lunch}}
-								<input type="checkbox" class="input-checkbox" name="{{name}}_lunch">
+								<input type="checkbox" class="js-meal-checkbox input-checkbox" name="{{name}}_lunch" data-type="lunch">
 								{{/lunch}}
 							</td>
 							<td class="meal-plan-meal">
 								{{#dinner}}
-								<input type="checkbox" class="input-checkbox" name="{{name}}_dinner">
+								<input type="checkbox" class="js-meal-checkbox input-checkbox" name="{{name}}_dinner" data-type="dinner">
 								{{/dinner}}
 							</td>
 							{{/meals}}
@@ -126,6 +126,10 @@
 				<div id="meal-warning-modal" class="meal-warning-modal modal hide fade" role="dialog" aria-hidden="true"></div>
 			</div>
 			<button class="btn btn-large" type="submit">Next</button>
+
+			<div class="meal-cost-container">
+				Cost from meals: $<span class="meal-cost">{{cost}}</span>
+			</div>
 			{{/meal_plan}}
 
 			{{#agreement}}
@@ -187,5 +191,9 @@
 
 				<button class="btn btn-large" type="submit">Next</button>
 			{{/info}}
+
+			<div class="extras-container">
+				<a class="js-reset-form" href="javascript:void(0);">Start Over</a>
+			</div>
 	</fieldset>
 </form>

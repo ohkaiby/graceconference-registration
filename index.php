@@ -28,8 +28,12 @@ $Cache = new Helpers\Cache;
 
 // api stuff
 
-$f3->route( 'POST /api/set/@key/@value', function( $f3, $params ) {
+$f3->route( 'POST /api/set/@key', function( $f3, $params ) {
+	global $Set;
 
+	header('Content-type: application/json');
+
+	echo $Set->set( $params[ 'key' ], $f3->get( 'POST.value' ) );
 } );
 
 $f3->route( 'GET /api/get/@key [ajax]', function( $f3, $params ) {

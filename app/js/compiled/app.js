@@ -8,11 +8,12 @@
 		gc.app.questionsCollection = new ( Backbone.Collection.extend( t.questionsCollectionCore ) )();
 
 		gc.models.answer = Backbone.Model.extend( t.answersModelCore );
+		gc.app.mealCost = new ( Backbone.Model.extend( t.mealCostCore ) )();
 		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
-		// gc.app.progressBarView = new( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
-		gc.app.answersView = new( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
+		// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
+		gc.app.answersView = new ( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
 
 		gc.app.localstorage = new t.localStorageController();
 
@@ -127,8 +128,8 @@
 					display : 'Is cellphone',
 					answer_type : 'radio',
 					answers : [
-						{ name : 'phone_is_mobile_yes', display : 'Yes, it’s a cell phone' },
-						{ name : 'phone_is_mobile_no', display : 'No, it’s not a cell phone' }
+						{ name : 'yes', display : 'Yes, it’s a cell phone' },
+						{ name : 'no', display : 'No, it’s not a cell phone' }
 					]
 				},
 
@@ -202,7 +203,7 @@
 				},
 
 				{
-					question_name : 'toddlers',
+					question_name : 'bringing_children',
 					question : 'Are you bringing any children?',
 					display : 'Bringing children',
 					answer_type : 'radio',
@@ -226,7 +227,7 @@
 						{ name : 'age', display : 'Age' }
 					],
 					depends_on : {
-						question_name : 'toddlers',
+						question_name : 'bringing_children',
 						answer_names : [ 'yes' ]
 					}
 				},
@@ -246,6 +247,8 @@
 			gc.app.questionsCollection.add( new gc.models.question( questions[ i ] ) );
 			t.fillSavedAnswer( questions[ i ] );
 		}
+
+		gc.app.mealCost.calculateTotalCostFromSavedAnswer();
 	};
 
 	t.fillSavedAnswer = function( question ) {
@@ -347,6 +350,67 @@
 		}
 	};
 
+	t.mealCostCore = {
+		defaults : {
+			total_cost : 0,
+			cost_from_breakfast : 0,
+			cost_from_lunch : 0,
+			cost_from_dinner : 0
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+
+			this.on( 'change', this.calculateTotalCost );
+		},
+
+		resetCosts : function() {
+			this.set( { cost_from_breakfast : 0, cost_from_lunch: 0, cost_from_dinner : 0 } );
+		},
+
+		addBreakfast : function() {
+			this.set( 'cost_from_breakfast', this.attributes.cost_from_breakfast + 5 );
+		},
+
+		addLunch : function() {
+			this.set( 'cost_from_lunch', this.attributes.cost_from_lunch + 7 );
+		},
+
+		addDinner : function() {
+			this.set( 'cost_from_dinner', this.attributes.cost_from_dinner + 8 );
+		},
+
+		calculateTotalCost : function() {
+			this.set( 'total_cost', this.attributes.cost_from_breakfast + this.attributes.cost_from_lunch + this.attributes.cost_from_dinner );
+		},
+
+		calculateTotalCostFromSavedAnswer : function() {
+			var savedMeals = gc.app.localstorage.load( 'meal_plan' );
+
+			if ( !savedMeals ) {
+				return false;
+			}
+
+			this.resetCosts();
+
+			savedMeals = JSON.parse( savedMeals );
+			savedMeals.meal_plan_day_1.dinner && this.addDinner();
+			savedMeals.meal_plan_day_2.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_2.lunch && this.addLunch();
+			savedMeals.meal_plan_day_2.dinner && this.addDinner();
+			savedMeals.meal_plan_day_3.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_3.lunch && this.addLunch();
+			savedMeals.meal_plan_day_3.dinner && this.addDinner();
+			savedMeals.meal_plan_day_4.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_4.lunch && this.addLunch();
+			savedMeals.meal_plan_day_4.dinner && this.addDinner();
+			savedMeals.meal_plan_day_5.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_5.lunch && this.addLunch();
+		}
+	};
+
+	t.registrationCostModelCore = {};
+
 	t.answerModelCore = { // an answer to a question
 		defaults : {
 			field : '', // corresponding to the saved key,
@@ -357,7 +421,9 @@
 	};
 
 	t.answersCollectionCore = { // collection of all answers
-
+		processForm : function() {
+			return $.post( '/api/set/attendee_registration/', { value : this.toJSON() } );
+		}
 	};
 
 	t.formViewCore = {
@@ -366,7 +432,9 @@
 			'submit form' : 'processAnswer',
 			'click .input-radio' : 'processAnswer',
 			'click .js-meal-plan-select-all' : 'allMeals',
-			'click .js-add-child' : 'addChild'
+			'click .js-add-child' : 'addChild',
+			'click .js-reset-form' : 'resetForm',
+			'click .js-meal-checkbox' : 'calculateMealCost'
 		},
 
 		initialize : function() {
@@ -386,6 +454,10 @@
 				this.renderCheckAnswers();
 			} else {
 				this.renderQuestion( questionModel.toJSON() );
+
+				if ( gc.app.answersCollection.length > 0 ) {
+					this.$el.find( '.extras-container' ).css( 'visibility', 'visible' );
+				}
 			}
 		},
 
@@ -398,7 +470,7 @@
 		},
 
 		renderCheckAnswers : function() {
-			this.remove();
+			this.$el.detach();
 
 			gc.app.answersView.render();
 		},
@@ -665,11 +737,10 @@
 
 		allMeals : function( ev ) {
 			var $allMealsCheckbox = $( ev.currentTarget ),
-				$allCheckboxes = this.$el.find( '.input-checkbox' ).filter( function() {
-					return this.id !== 'meal-plan-select-all-checkbox';
-				} );
+				$allCheckboxes = this.$el.find( '.js-meal-checkbox' );
 
 			$allCheckboxes.prop( 'checked', $allMealsCheckbox.is( ':checked' ) );
+			this.calculateMealCost();
 
 			return true;
 		},
@@ -686,6 +757,26 @@
 
 			$clone.insertAfter( $children );
 			return false;
+		},
+
+		resetForm : function() {
+			gc.app.resetForm();
+			return false;
+		},
+
+		calculateMealCost : function() {
+			var $allCheckboxes = this.$el.find( '.js-meal-checkbox:checked' ),
+				mealFuncs = { breakfast : 'addBreakfast', lunch : 'addLunch', dinner : 'addDinner' },
+				i;
+
+			gc.app.mealCost.resetCosts();
+
+			for ( i = 0; i < $allCheckboxes.length; i++ ) {
+				gc.app.mealCost[ mealFuncs[ $( $allCheckboxes[ i ] ).data( 'type' ) ] ]();
+			}
+
+			this.$el.find( '.meal-cost-container' ).css( 'visibility', 'visible' ).
+				find( '.meal-cost' ).empty().append( gc.app.mealCost.get( 'total_cost' ) );
 		}
 	};
 
@@ -709,7 +800,7 @@
 		},
 
 		resetForm : function() {
-			this.$el.remove().empty();
+			this.$el.detach().empty();
 
 			gc.app.resetForm();
 
@@ -717,8 +808,19 @@
 		},
 
 		processForm : function() {
+			gc.app.answersCollection.processForm().
+				done( this.transitionToPayment ).
+				fail( this.submissionError );
 
 			return false;
+		},
+
+		transitionToPayment : function() {
+
+		},
+
+		submissionError : function() {
+
 		},
 
 		generateTemplateVars : function() {
