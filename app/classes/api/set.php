@@ -19,6 +19,8 @@ class Set {
 	}
 
 	private function registerAttendee( $val ) {
+		global $f3;
+
 		$final_values = [];
 		foreach( $val as $field ) {
 			$final_values[ $field[ 'field' ] ] = $field[ 'value' ];
@@ -40,10 +42,10 @@ class Set {
 			$final_values[ 'bringing_children' ] = 0;
 		}
 
-		return $this->formatDataToJSON( [ 'status' => 'success' ] ); // test response
+		// return $this->formatDataToJSON( [ 'status' => 'success' ] ); // test response
 
 		$result = $this->db->exec( 'INSERT INTO attendees
-			(first_name, last_name, email, age, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, bringing_children, children_details, agreed_to_hotel_agreement) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+			(first_name, last_name, email, age, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, bringing_children, children_details, agreed_to_hotel_agreement, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
 			array(
 				1 => $final_values[ 'first_name' ],
 				2 => $final_values[ 'last_name' ],
@@ -61,12 +63,13 @@ class Set {
 				14 => $final_values[ 'meal_plan' ],
 				15 => $final_values[ 'bringing_children' ],
 				16 => $final_values[ 'children_details' ],
-				17 => $final_values[ 'hotel_code_of_conduct' ]
+				17 => $final_values[ 'hotel_code_of_conduct' ],
+				18 => $f3->get( 'IP' )
 			)
 		);
 
 		if ( $result === 1 ) {
-			return $this->formatDataToJSON( [ 'status' => 'success' ] );
+			return $this->formatDataToJSON( [ 'status' => 'success', 'id' => $this->db->lastInsertId() ] );
 		} else {
 			return $this->formatDataToJSON( [ 'status' => 'error' ] );
 		}

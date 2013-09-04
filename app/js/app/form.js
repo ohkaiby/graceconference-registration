@@ -7,9 +7,12 @@
 		gc.models.question = Backbone.Model.extend( t.questionsModelCore );
 		gc.app.questionsCollection = new ( Backbone.Collection.extend( t.questionsCollectionCore ) )();
 
-		gc.models.answer = Backbone.Model.extend( t.answersModelCore );
-		gc.app.mealCost = new ( Backbone.Model.extend( t.mealCostCore ) )();
-		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
+		gc.collections.answer = Backbone.Collection.extend( t.answersCollectionCore );
+		gc.models.answer = Backbone.Model.extend( t.answerModelCore );
+		gc.app.answersCollection = new ( gc.collections.answer )();
+
+		gc.app.mealCostModel = new ( Backbone.Model.extend( t.mealCostModelCore ) )();
+		gc.app.paymentModel = new ( Backbone.Model.extend( t.paymentModelCore ) )();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
 		// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
@@ -52,6 +55,7 @@
 					display : 'Age',
 					answer_type : 'radio',
 					answers : [
+						{ name : '11', display : '11 and under' },
 						{ name : '12_17', display : '12 to 17 years old' },
 						{ name : '18', display : '18+ years old' }
 					]
@@ -63,6 +67,11 @@
 					display : 'What grade',
 					answer_type : 'radio',
 					answers : [
+						{ name : '1st', display : '1st grade' },
+						{ name : '2nd', display : '2nd grade' },
+						{ name : '3rd', display : '3rd grade' },
+						{ name : '4th', display : '4th grade' },
+						{ name : '5th', display : '5th grade' },
 						{ name : '6th', display : '6th grade' },
 						{ name : '7th', display : '7th grade' },
 						{ name : '8th', display : '8th grade' },
@@ -73,7 +82,7 @@
 					],
 					depends_on : {
 						question_name : 'age',
-						answer_names : [ '12_17' ]
+						answer_names : [ '11', '12_17' ]
 					}
 				},
 
@@ -248,7 +257,7 @@
 			t.fillSavedAnswer( questions[ i ] );
 		}
 
-		gc.app.mealCost.calculateTotalCostFromSavedAnswer();
+		gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
 	};
 
 	t.fillSavedAnswer = function( question ) {
@@ -350,7 +359,7 @@
 		}
 	};
 
-	t.mealCostCore = {
+	t.mealCostModelCore = {
 		defaults : {
 			total_cost : 0,
 			cost_from_breakfast : 0,
@@ -385,7 +394,7 @@
 		},
 
 		calculateTotalCostFromSavedAnswer : function() {
-			var savedMeals = gc.app.localstorage.load( 'meal_plan' );
+			var savedMeals = gc.app.answersCollection.find( function( model ) { return model.attributes.field === 'meal_plan'; } );
 
 			if ( !savedMeals ) {
 				return false;
@@ -393,7 +402,7 @@
 
 			this.resetCosts();
 
-			savedMeals = JSON.parse( savedMeals );
+			savedMeals = JSON.parse( savedMeals.attributes.value );
 			savedMeals.meal_plan_day_1.dinner && this.addDinner();
 			savedMeals.meal_plan_day_2.breakfast && this.addBreakfast();
 			savedMeals.meal_plan_day_2.lunch && this.addLunch();
@@ -409,7 +418,52 @@
 		}
 	};
 
-	t.registrationCostModelCore = {};
+	t.paymentModelCore = {
+		defaults : {
+			registration_cost : 0,
+			cost_from_meals : 0,
+			total_cost : 0
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+
+			gc.app.mealCostModel.on( 'change:total_cost', this.setCostFromMeals );
+
+			this.on( 'change:cost_from_meals', this.calculateTotalCost );
+			this.on( 'change:registration_cost', this.calculateTotalCost );
+		},
+
+		setRegistrationCost : function() {
+			var dateCutoffs = {
+					early : ( new Date( '2013-09-15 11:59:59' ) ).getTime(),
+					regular : ( new Date( '2013-11-15 11:59:59' ) ).getTime(),
+					late : ( new Date( '2013-12-10 11:59:59' ) ).getTime()
+				},
+				now = Date.now(),
+				cost;
+
+			if ( gc.app.answersCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
+				cost = 0;
+			} else if ( now <= dateCutoffs.early ) {
+				cost = 10;
+			} else if ( now <= dateCutoffs.regular ) {
+				cost = 15;
+			} else {
+				cost = 25;
+			}
+
+			this.set( 'registration_cost', cost );
+		},
+
+		setCostFromMeals : function() {
+			this.set( 'cost_from_meals', gc.app.mealCostModel.attributes.total_cost );
+		},
+
+		calculateTotalCost : function() {
+			this.set( 'total_cost', this.attributes.registration_cost + this.attributes.cost_from_children + this.attributes.cost_from_meals );
+		}
+	};
 
 	t.answerModelCore = { // an answer to a question
 		defaults : {
@@ -769,14 +823,14 @@
 				mealFuncs = { breakfast : 'addBreakfast', lunch : 'addLunch', dinner : 'addDinner' },
 				i;
 
-			gc.app.mealCost.resetCosts();
+			gc.app.mealCostModel.resetCosts();
 
 			for ( i = 0; i < $allCheckboxes.length; i++ ) {
-				gc.app.mealCost[ mealFuncs[ $( $allCheckboxes[ i ] ).data( 'type' ) ] ]();
+				gc.app.mealCostModel[ mealFuncs[ $( $allCheckboxes[ i ] ).data( 'type' ) ] ]();
 			}
 
 			this.$el.find( '.meal-cost-container' ).css( 'visibility', 'visible' ).
-				find( '.meal-cost' ).empty().append( gc.app.mealCost.get( 'total_cost' ) );
+				find( '.meal-cost' ).empty().append( gc.app.mealCostModel.get( 'total_cost' ) );
 		}
 	};
 
