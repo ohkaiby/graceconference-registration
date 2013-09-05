@@ -19,7 +19,7 @@ class Get {
 			return $this->checkPaymentMade();
 		}
 
-		return $this->formatDataToJSON( [ 'error' => 'key not recognized: ' . $key ] );
+		return $this->formatDataToJSON( array( 'error' => 'key not recognized: ' . $key ) );
 	}
 
 	private function getWorkshops() {
@@ -56,7 +56,7 @@ class Get {
 		$id = $f3->get( 'GET.attendee_id' );
 
 		$results = $this->db->exec( 'SELECT paid FROM attendees WHERE id = ?', $id );
-		return $this->formatDataToJSON( [ 'paid' => $results && $results[ 0 ][ 'paid' ] === 1 ] );
+		return $this->formatDataToJSON( array( 'paid' => $results && $results[ 0 ][ 'paid' ] === 1 ) );
 	}
 
 	public function formatDataToJSON( $data ) {

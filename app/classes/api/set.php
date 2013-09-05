@@ -17,7 +17,7 @@ class Set {
 			return $this->attendeePayment( $post );
 		}
 
-		return $this->formatDataToJSON( [ 'error' => 'key not recognized: ' . $key ] );
+		return $this->formatDataToJSON( array( 'error' => 'key not recognized: ' . $key ) );
 	}
 
 	private function registerAttendee( $post ) {
@@ -77,9 +77,9 @@ class Set {
 				$f3->set( 'SESSION.'. $key, $val );
 			}
 
-			return $this->formatDataToJSON( [ 'status' => 'success', 'id' => $this->db->lastInsertId() ] );
+			return $this->formatDataToJSON( array( 'status' => 'success', 'id' => $this->db->lastInsertId() ) );
 		} else {
-			return $this->formatDataToJSON( [ 'status' => 'error' ] );
+			return $this->formatDataToJSON( array( 'status' => 'error' ) );
 		}
 	}
 
@@ -102,9 +102,9 @@ class Set {
 			$email = new Helpers\Email();
 			$email->sendRegistrationConfirmation( $id );
 
-			return $this->formatDataToJSON( [ 'status' => 'success' ] );
+			return $this->formatDataToJSON( array( 'status' => 'success' ) );
 		} else {
-			return $this->formatDataToJSON( [ 'status' => 'error' ] );
+			return $this->formatDataToJSON( array( 'status' => 'error' ) );
 		}
 	}
 

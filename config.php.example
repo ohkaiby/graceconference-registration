@@ -1,6 +1,6 @@
 <?php
 
-$config = [];
+$config = array();
 
 // database
 $config[ 'db_host' ] = '127.0.0.1';
@@ -12,7 +12,7 @@ $config[ 'db_pass' ] = 'your_db_user_password';
 // environment
 $config[ 'environment' ] = 'development'; // development, test, stage, production
 
-if ( in_array( $config[ 'environment' ], [ 'stage', 'production' ] ) ) {
+if ( in_array( $config[ 'environment' ], array( 'stage', 'production' ) ) ) {
 	$config[ 'debug' ] = 0;
 	$config[ 'cache' ] = true;
 } else {
