@@ -10,16 +10,20 @@ class Set {
 		$this->db = $f3->get( 'db' );
 	}
 
-	public function set( $key, $val ) {
+	public function set( $key, $post ) {
 		if ( $key === 'attendee_registration' ) {
-			return $this->registerAttendee( $val );
+			return $this->registerAttendee( $post );
+		} elseif ( $key === 'attendee_payment' ) {
+			return $this->attendeePayment( $post );
 		}
 
 		return $this->formatDataToJSON( [ 'error' => 'key not recognized: ' . $key ] );
 	}
 
-	private function registerAttendee( $val ) {
+	private function registerAttendee( $post ) {
 		global $f3;
+
+		$val = $post[ 'value' ];
 
 		$final_values = [];
 		foreach( $val as $field ) {
@@ -41,8 +45,6 @@ class Set {
 		} else {
 			$final_values[ 'bringing_children' ] = 0;
 		}
-
-		// return $this->formatDataToJSON( [ 'status' => 'success' ] ); // test response
 
 		$result = $this->db->exec( 'INSERT INTO attendees
 			(first_name, last_name, email, age, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, bringing_children, children_details, agreed_to_hotel_agreement, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
@@ -69,7 +71,38 @@ class Set {
 		);
 
 		if ( $result === 1 ) {
+			$f3->set( 'SESSION.attendee_id', $this->db->lastInsertId() );
+
+			foreach ( $final_values as $key => $val ) {
+				$f3->set( 'SESSION.'. $key, $val );
+			}
+
 			return $this->formatDataToJSON( [ 'status' => 'success', 'id' => $this->db->lastInsertId() ] );
+		} else {
+			return $this->formatDataToJSON( [ 'status' => 'error' ] );
+		}
+	}
+
+	private function attendeePayment( $post ) { // this is the paypal callback
+		global $f3;
+
+		$amount = $post[ 'mc_gross' ];
+		$id = $post[ 'invoice' ];
+
+		$result = $this->db->exec( 'UPDATE attendees SET paid=?, amount_paid=?, payment_date=? WHERE id=?;',
+			array(
+				1 => 1,
+				2 => $amount,
+				3 => date( 'Y-m-d H:i:s' ),
+				4 => $id
+			)
+		);
+
+		if ( $result === 1 ) {
+			$email = new Helpers\Email();
+			$email->sendRegistrationConfirmation( $id );
+
+			return $this->formatDataToJSON( [ 'status' => 'success' ] );
 		} else {
 			return $this->formatDataToJSON( [ 'status' => 'error' ] );
 		}

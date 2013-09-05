@@ -15,6 +15,8 @@ class Get {
 
 		if ( $key === 'workshops' ) {
 			return $this->getWorkshops();
+		} elseif ( $key === 'check_payment_made' ) {
+			return $this->checkPaymentMade();
 		}
 
 		return $this->formatDataToJSON( [ 'error' => 'key not recognized: ' . $key ] );
@@ -47,6 +49,14 @@ class Get {
 		$Cache->set( 'workshops', $results );
 
 		return $this->formatDataToJSON( $results );
+	}
+
+	private function checkPaymentMade() {
+		global $f3;
+		$id = $f3->get( 'GET.attendee_id' );
+
+		$results = $this->db->exec( 'SELECT paid FROM attendees WHERE id = ?', $id );
+		return $this->formatDataToJSON( [ 'paid' => $results && $results[ 0 ][ 'paid' ] === 1 ] );
 	}
 
 	public function formatDataToJSON( $data ) {

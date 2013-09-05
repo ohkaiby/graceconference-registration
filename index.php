@@ -33,7 +33,7 @@ $f3->route( 'POST /api/set/@key', function( $f3, $params ) {
 
 	header('Content-type: application/json');
 
-	echo $Set->set( $params[ 'key' ], $f3->get( 'POST.value' ) );
+	echo $Set->set( $params[ 'key' ], $f3->get( 'POST' ) );
 } );
 
 $f3->route( 'GET /api/get/@key [ajax]', function( $f3, $params ) {

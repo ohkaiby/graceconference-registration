@@ -13,4 +13,14 @@
 		<button class="btn btn-large js-correct" type="submit">Yes, It’s Correct</button>
 		<button class="btn btn-large js-incorrect" type="submit">No, Start Over</button>
 	</div>
+
+	<div id="error-modal" class="modal hide fade">
+		<div class="modal-body">
+			<p>There was an error while we were processing your registration.</p>
+			<p>Please try again later.</p>
+		</div>
+		<div class="modal-footer">
+			<a href="javascript:void(0);" class="btn">Close</a>
+		</div>
+	</div>
 </div>

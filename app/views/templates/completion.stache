@@ -1,0 +1,6 @@
+<h3 class="completion-title">Registration Complete</h3>
+<p class="completion-text">You’ve finished the registration process! We also sent you an email confirmation.</p>
+
+{{#hasChildren}}
+<p class="completion-text">You’ll need to register your children as well.</p>
+{{/hasChildren}}

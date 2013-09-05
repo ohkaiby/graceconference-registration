@@ -4,19 +4,25 @@
 	var t = tester || {};
 
 	t.init = function() {
+		var attendeeId;
+
 		gc.models.question = Backbone.Model.extend( t.questionsModelCore );
 		gc.app.questionsCollection = new ( Backbone.Collection.extend( t.questionsCollectionCore ) )();
 
-		gc.collections.answer = Backbone.Collection.extend( t.answersCollectionCore );
 		gc.models.answer = Backbone.Model.extend( t.answerModelCore );
-		gc.app.answersCollection = new ( gc.collections.answer )();
+		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
+		gc.app.childrenCollection = new ( Backbone.Collection.extend( t.childrenCollectionCore ) )();
 
 		gc.app.mealCostModel = new ( Backbone.Model.extend( t.mealCostModelCore ) )();
-		gc.app.paymentModel = new ( Backbone.Model.extend( t.paymentModelCore ) )();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
 		// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
 		gc.app.answersView = new ( Backbone.View.extend( t.answersViewCore ) )( { collection : gc.app.answersCollection } );
+
+		gc.app.paymentModel = new ( Backbone.Model.extend( t.paymentModelCore ) )();
+		gc.app.paymentView = new ( Backbone.View.extend( t.paymentViewCore ) )();
+
+		gc.app.completionView = new ( Backbone.View.extend( t.completionViewCore ) )();
 
 		gc.app.localstorage = new t.localStorageController();
 
@@ -24,7 +30,20 @@
 		gc.app.resetForm = t.resetForm;
 
 		t.fillQuestions();
-		gc.app.formView.render();
+
+		if ( attendeeId = ( gc.app.attendee_id || gc.app.localstorage.load( 'attendee_id' ) ) ) {
+			$.get( '/api/get/check_payment_made', { attendee_id : attendeeId } ).done( function( response ) {
+				if ( response.paid ) {
+					gc.app.completionView.render();
+				} else {
+					gc.app.formView.render();
+				}
+			} );
+		} else {
+			gc.app.formView.render();
+		}
+
+		gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
 	};
 
 	t.fillQuestions = function() {
@@ -189,7 +208,7 @@
 						},
 
 						{
-							name : 'meal_plan_day_4',
+							name : 'meal_plan_day_5',
 							display : 'Monday',
 							date : '12/30/2013',
 							meals : { breakfast : true, lunch : true, dinner : false }
@@ -256,8 +275,6 @@
 			gc.app.questionsCollection.add( new gc.models.question( questions[ i ] ) );
 			t.fillSavedAnswer( questions[ i ] );
 		}
-
-		gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
 	};
 
 	t.fillSavedAnswer = function( question ) {
@@ -276,7 +293,7 @@
 				}
 			}
 		} else if (
-				( question.answer_type === 'radio' || question.answer_type === 'meal_plan' || question.answer_type === 'children' ) &&
+				( question.answer_type === 'radio' || question.answer_type === 'meal_plan' ) &&
 				( savedAnswer = gc.app.localstorage.load( question.question_name ) )
 		) {
 			gc.app.answersCollection.add( new gc.models.answer( {
@@ -285,6 +302,18 @@
 				display : question.display,
 				associated_question : question.question_name
 			} ) );
+		} else if ( question.answer_type === 'children' && ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) ) {
+			gc.app.answersCollection.add( new gc.models.answer( {
+				field : question.question_name,
+				value : savedAnswer,
+				display : question.display,
+				associated_question : question.question_name
+			} ) );
+
+			savedAnswer = JSON.parse( savedAnswer );
+			for ( i = 0; i < savedAnswer.length; i++ ) {
+				gc.app.childrenCollection.add( new Backbone.Model( savedAnswer[ i ] ) );
+			}
 		} else if ( gc.app.localstorage.load( question.question_name ) && ( question.answer_type === 'agreement' || question.answer_type === 'info' ) ) {
 			gc.app.answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
@@ -359,112 +388,6 @@
 		}
 	};
 
-	t.mealCostModelCore = {
-		defaults : {
-			total_cost : 0,
-			cost_from_breakfast : 0,
-			cost_from_lunch : 0,
-			cost_from_dinner : 0
-		},
-
-		initialize : function() {
-			_.bindAll( this );
-
-			this.on( 'change', this.calculateTotalCost );
-		},
-
-		resetCosts : function() {
-			this.set( { cost_from_breakfast : 0, cost_from_lunch: 0, cost_from_dinner : 0 } );
-		},
-
-		addBreakfast : function() {
-			this.set( 'cost_from_breakfast', this.attributes.cost_from_breakfast + 5 );
-		},
-
-		addLunch : function() {
-			this.set( 'cost_from_lunch', this.attributes.cost_from_lunch + 7 );
-		},
-
-		addDinner : function() {
-			this.set( 'cost_from_dinner', this.attributes.cost_from_dinner + 8 );
-		},
-
-		calculateTotalCost : function() {
-			this.set( 'total_cost', this.attributes.cost_from_breakfast + this.attributes.cost_from_lunch + this.attributes.cost_from_dinner );
-		},
-
-		calculateTotalCostFromSavedAnswer : function() {
-			var savedMeals = gc.app.answersCollection.find( function( model ) { return model.attributes.field === 'meal_plan'; } );
-
-			if ( !savedMeals ) {
-				return false;
-			}
-
-			this.resetCosts();
-
-			savedMeals = JSON.parse( savedMeals.attributes.value );
-			savedMeals.meal_plan_day_1.dinner && this.addDinner();
-			savedMeals.meal_plan_day_2.breakfast && this.addBreakfast();
-			savedMeals.meal_plan_day_2.lunch && this.addLunch();
-			savedMeals.meal_plan_day_2.dinner && this.addDinner();
-			savedMeals.meal_plan_day_3.breakfast && this.addBreakfast();
-			savedMeals.meal_plan_day_3.lunch && this.addLunch();
-			savedMeals.meal_plan_day_3.dinner && this.addDinner();
-			savedMeals.meal_plan_day_4.breakfast && this.addBreakfast();
-			savedMeals.meal_plan_day_4.lunch && this.addLunch();
-			savedMeals.meal_plan_day_4.dinner && this.addDinner();
-			savedMeals.meal_plan_day_5.breakfast && this.addBreakfast();
-			savedMeals.meal_plan_day_5.lunch && this.addLunch();
-		}
-	};
-
-	t.paymentModelCore = {
-		defaults : {
-			registration_cost : 0,
-			cost_from_meals : 0,
-			total_cost : 0
-		},
-
-		initialize : function() {
-			_.bindAll( this );
-
-			gc.app.mealCostModel.on( 'change:total_cost', this.setCostFromMeals );
-
-			this.on( 'change:cost_from_meals', this.calculateTotalCost );
-			this.on( 'change:registration_cost', this.calculateTotalCost );
-		},
-
-		setRegistrationCost : function() {
-			var dateCutoffs = {
-					early : ( new Date( '2013-09-15 11:59:59' ) ).getTime(),
-					regular : ( new Date( '2013-11-15 11:59:59' ) ).getTime(),
-					late : ( new Date( '2013-12-10 11:59:59' ) ).getTime()
-				},
-				now = Date.now(),
-				cost;
-
-			if ( gc.app.answersCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
-				cost = 0;
-			} else if ( now <= dateCutoffs.early ) {
-				cost = 10;
-			} else if ( now <= dateCutoffs.regular ) {
-				cost = 15;
-			} else {
-				cost = 25;
-			}
-
-			this.set( 'registration_cost', cost );
-		},
-
-		setCostFromMeals : function() {
-			this.set( 'cost_from_meals', gc.app.mealCostModel.attributes.total_cost );
-		},
-
-		calculateTotalCost : function() {
-			this.set( 'total_cost', this.attributes.registration_cost + this.attributes.cost_from_children + this.attributes.cost_from_meals );
-		}
-	};
-
 	t.answerModelCore = { // an answer to a question
 		defaults : {
 			field : '', // corresponding to the saved key,
@@ -476,8 +399,18 @@
 
 	t.answersCollectionCore = { // collection of all answers
 		processForm : function() {
-			return $.post( '/api/set/attendee_registration/', { value : this.toJSON() } );
+			return $.ajax( '/api/set/attendee_registration/', {
+				data : {
+					value : this.toJSON()
+				},
+				timeout : 10000,
+				type : 'POST'
+			} );
 		}
+	};
+
+	t.childrenCollectionCore = {
+
 	};
 
 	t.formViewCore = {
@@ -771,6 +704,10 @@
 				}
 			}
 
+			for ( i = 0; i < children.length; i++ ) {
+				gc.app.childrenCollection.add( new Backbone.Model( children[ i ] ) );
+			}
+
 			return [ {
 				field : questionName,
 				value : JSON.stringify( children ),
@@ -846,6 +783,11 @@
 		},
 
 		render : function() {
+			if ( gc.app.localstorage.load( 'form_completed_id' ) ) {
+				gc.app.paymentView.render();
+				return;
+			}
+
 			this.$el.empty().append( gc.template( 'answers', this.generateTemplateVars() ) );
 
 			if ( this.$el.parent().length === 0 ) {
@@ -862,6 +804,9 @@
 		},
 
 		processForm : function() {
+			this.$el.find( '.js-correct' ).empty().append( 'Processing…' ).
+				prop( 'disabled', true );
+
 			gc.app.answersCollection.processForm().
 				done( this.transitionToPayment ).
 				fail( this.submissionError );
@@ -869,12 +814,32 @@
 			return false;
 		},
 
-		transitionToPayment : function() {
+		transitionToPayment : function( response ) {
+			if ( response.status !== 'success' ) {
+				this.submissionError();
+				return;
+			}
 
+			gc.app.localstorage.save( 'form_completed_id', response.id );
+			gc.app.attendee_id = response.id;
+
+			this.$el.detach();
+
+			gc.app.paymentView.render();
 		},
 
 		submissionError : function() {
+			var $error = this.$el.find( '#error-modal' );
 
+			this.$el.find( '.js-correct' ).empty().append( 'Yes, It’s Correct' ).
+				prop( 'disabled', false );
+
+			$error.find( '.btn' ).on( 'click', function() {
+				$error.modal( 'hide' );
+
+				$( this ).off( 'click' );
+			} );
+			$error.modal();
 		},
 
 		generateTemplateVars : function() {
@@ -960,9 +925,201 @@
 		}
 	};
 
-	t.completionViewCore = {
+	t.mealCostModelCore = {
+		defaults : {
+			total_cost : 0,
+			cost_from_breakfast : 0,
+			cost_from_lunch : 0,
+			cost_from_dinner : 0
+		},
+
 		initialize : function() {
 			_.bindAll( this );
+
+			this.on( 'change', this.calculateTotalCost );
+		},
+
+		resetCosts : function() {
+			this.set( { cost_from_breakfast : 0, cost_from_lunch: 0, cost_from_dinner : 0 } );
+		},
+
+		addBreakfast : function() {
+			this.set( 'cost_from_breakfast', this.attributes.cost_from_breakfast + 5 );
+		},
+
+		addLunch : function() {
+			this.set( 'cost_from_lunch', this.attributes.cost_from_lunch + 7 );
+		},
+
+		addDinner : function() {
+			this.set( 'cost_from_dinner', this.attributes.cost_from_dinner + 8 );
+		},
+
+		calculateTotalCost : function() {
+			this.set( 'total_cost', this.attributes.cost_from_breakfast + this.attributes.cost_from_lunch + this.attributes.cost_from_dinner );
+		},
+
+		calculateTotalCostFromSavedAnswer : function() {
+			var savedMeals = gc.app.answersCollection.find( function( model ) { return model.attributes.field === 'meal_plan'; } );
+
+			if ( !savedMeals ) {
+				return false;
+			}
+
+			this.resetCosts();
+
+			savedMeals = JSON.parse( savedMeals.attributes.value );
+			savedMeals.meal_plan_day_1.dinner && this.addDinner();
+			savedMeals.meal_plan_day_2.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_2.lunch && this.addLunch();
+			savedMeals.meal_plan_day_2.dinner && this.addDinner();
+			savedMeals.meal_plan_day_3.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_3.lunch && this.addLunch();
+			savedMeals.meal_plan_day_3.dinner && this.addDinner();
+			savedMeals.meal_plan_day_4.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_4.lunch && this.addLunch();
+			savedMeals.meal_plan_day_4.dinner && this.addDinner();
+			savedMeals.meal_plan_day_5.breakfast && this.addBreakfast();
+			savedMeals.meal_plan_day_5.lunch && this.addLunch();
+		}
+	};
+
+	t.paymentModelCore = {
+		defaults : {
+			registration_cost : 0,
+			cost_from_meals : 0,
+			total_cost : 0
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+
+			gc.app.mealCostModel.on( 'change:total_cost', this.setCostFromMeals );
+
+			this.on( 'change:cost_from_meals', this.calculateTotalCost );
+			this.on( 'change:registration_cost', this.calculateTotalCost );
+		},
+
+		setRegistrationCost : function() {
+			var dateCutoffs = {
+					early : ( new Date( '2013-09-15 11:59:59' ) ).getTime(),
+					regular : ( new Date( '2013-11-30 11:59:59' ) ).getTime(),
+					late : ( new Date( '2013-12-10 11:59:59' ) ).getTime()
+				},
+				now = Date.now(),
+				cost;
+
+			if ( gc.app.answersCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
+				cost = 0;
+			} else if ( now <= dateCutoffs.early ) {
+				cost = 10;
+			} else if ( now <= dateCutoffs.regular ) {
+				cost = 20;
+			} else {
+				cost = 25;
+			}
+
+			this.set( 'registration_cost', cost );
+			return cost;
+		},
+
+		setCostFromMeals : function() {
+			this.set( 'cost_from_meals', gc.app.mealCostModel.attributes.total_cost );
+		},
+
+		calculateTotalCost : function() {
+			this.set( 'total_cost', this.attributes.registration_cost + this.attributes.cost_from_meals );
+		}
+	};
+
+	t.paymentViewCore = {
+		events : {
+			'click .js-pay' : 'proceedWithPayment'
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+		},
+
+		render : function() {
+			this.$el.empty().append( gc.template( 'payment', this.generatePaymentTemplateVars() ) );
+
+			if ( this.$el.parent().length === 0 ) {
+				this.$el.appendTo( '#view-container' );
+			}
+		},
+
+		generatePaymentTemplateVars : function() {
+			var stache = {
+					name : gc.app.answersCollection.findWhere( { field : 'first_name' } ).attributes.value +' '+ gc.app.answersCollection.findWhere( { field : 'last_name' } ).attributes.value
+				},
+				meals = JSON.parse( gc.app.answersCollection.findWhere( { field : 'meal_plan' } ).attributes.value ),
+				mealQuestions = gc.app.questionsCollection.findWhere( { question_name : 'meal_plan' } ).attributes.answers,
+				breakfasts = [],
+				lunches = [],
+				dinners = [],
+				i;
+
+			stache.registration_cost = gc.app.paymentModel.setRegistrationCost();
+			gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
+			gc.app.paymentModel.calculateTotalCost();
+			stache.total_meal_cost = gc.app.mealCostModel.attributes.total_cost;
+			stache.breakfast_cost = gc.app.mealCostModel.attributes.cost_from_breakfast;
+			stache.lunch_cost = gc.app.mealCostModel.attributes.cost_from_lunch;
+			stache.dinner_cost = gc.app.mealCostModel.attributes.cost_from_dinner;
+			stache.total_cost = gc.app.paymentModel.attributes.total_cost;
+
+			for ( i = 0; i < mealQuestions.length; i++ ) {
+				meals[ mealQuestions[ i ].name ].breakfast && breakfasts.push( mealQuestions[ i ].display );
+				meals[ mealQuestions[ i ].name ].lunch && lunches.push( mealQuestions[ i ].display );
+				meals[ mealQuestions[ i ].name ].dinner && dinners.push( mealQuestions[ i ].display );
+			}
+
+			stache.breakfast_days = breakfasts.join( ', ' );
+			stache.lunch_days = lunches.join( ', ' );
+			stache.dinner_days = dinners.join( ', ' );
+
+			return stache;
+		},
+
+		proceedWithPayment : function() {
+			var urlArr = [
+					'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C',
+					'amount=' + gc.app.paymentModel.attributes.total_cost,
+					'invoice=' + gc.app.attendee_id,
+					'notify_url=http://registration.graceconference.org/api/set/attendee_payment',
+					'return_url=http://registration.graceconference.org/'
+				];
+
+			window.location.href = encodeURIComponent( urlArr.join( '&' ) );
+			return false;
+		}
+	};
+
+	t.completionViewCore = {
+		events : {
+			'click .js-reset-for-child-registration' : 'resetForChild',
+			'click .js-reset-session' : 'resetEverything'
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+		},
+
+		render : function() {
+			this.$el.empty().append( gc.template( 'completion', {} ) );
+
+			if ( this.$el.parent().length === 0 ) {
+				this.$el.appendTo( '#view-container' );
+			}
+		},
+
+		resetForChild : function() {
+			return false;
+		},
+
+		resetEverything : function() {
+			return false;
 		}
 	};
 
@@ -1003,11 +1160,17 @@
 		};
 
 		this.load = function( key ) {
+			var result;
+
 			if ( Modernizr.localstorage ) {
-				return window.localStorage.getItem( key );
+				result = window.localStorage.getItem( key );
 			}
 
-			return undefined;
+			if ( !result ) {
+				result = gc.session[ key ];
+			}
+
+			return result;
 		};
 
 		this.clear = function() {

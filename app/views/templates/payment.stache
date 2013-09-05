@@ -1,0 +1,50 @@
+<table class="table payment">
+	<thead class="payment-head">
+		<tr>
+			<th colspan="2">{{name}}’s cost for attending Grace 2013</th>
+		</tr>
+		<tr>
+			<th width="80%">Item</th>
+			<th width="20%">Cost</th>
+		</tr>
+	</thead>
+	<tbody class="payment-body">
+		<tr>
+			<td class="payment-item payment-item-major">Meals</td>
+			<td class="payment-cost payment-cost-major">${{total_meal_cost}}</td>
+		</tr>
+		<tr>
+			<td class="payment-item payment-item-minor">Breakfast on {{breakfast_days}}</td>
+			<td class="payment-cost payment-cost-minor">${{breakfast_cost}}</td>
+		</tr>
+		<tr>
+			<td class="payment-item payment-item-minor">Lunch on {{lunch_days}}</td>
+			<td class="payment-cost payment-cost-minor">${{lunch_cost}}</td>
+		</tr>
+		<tr>
+			<td class="payment-item payment-item-minor">Dinner on {{dinner_days}}</td>
+			<td class="payment-cost payment-cost-minor">${{dinner_cost}}</td>
+		</tr>
+
+		<tr>
+			<td class="payment-item payment-item-major">
+				Registration Fee
+				{{#early}}&nbsp;(early registration before 9/15/2013){{/early}}
+				{{#normal}}&nbsp;(early registration before 11/30/2013){{/normal}}
+				{{#late}}&nbsp;(registration before 12/10/2013){{/late}}
+			</td>
+			<td class="payment-cost payment-cost-major">${{registration_cost}}</td>
+		</tr>
+
+		<tr class="payment-total-row">
+			<td class="payment-item payment-item-major">Total</td>
+			<td class="payment-cost payment-cost-major">${{total_cost}}</td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="payment-button-wrapper">
+				<a class="payment-paypal-pay js-pay" href="javascript:void(0);"></a>
+			</td>
+		</tr>
+	</tbody>
+</table>

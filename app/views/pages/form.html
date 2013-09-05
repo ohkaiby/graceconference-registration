@@ -25,9 +25,18 @@
 			app : {},
 			views : {},
 			models : {},
-			collections : {}
+			collections : {},
+			session : {}
 		},
 		tester = undefined;
+
+	<?php
+	if ( !empty( $SESSION) ) {
+		foreach( $SESSION as $key => $value ) {
+			echo 'gc.session.'. $key .' = '. $value;
+		}
+	}
+	?>
 
 	yepnope( [
 		{

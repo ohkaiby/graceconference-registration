@@ -249,6 +249,23 @@ h3, h4 { font-weight: @buff; }
 	float: right;
 }
 
+.payment {
+	&-body { font-size: 14px; }
+	&-item-major, &-cost-major { font-weight: 600; }
+	&-item-minor, &-cost-minor { color: @subtle-text; }
+	&-item-minor { padding-left: @gutter-size !important; }
+	&-total-row { font-size: 16px; background-color: #eee; }
+	&-total-row &-item-major,
+	&-total-row &-cost-major { font-weight: bold; }
+
+	&-button-wrapper { text-align: right !important; padding-top: 30px !important; }
+	&-paypal-pay {
+		display: inline-block;
+		width: 109px; height: 28px;
+		background: url("/app/img/paypal_button.gif") no-repeat scroll left top;
+	}
+}
+
 // Large desktop
 @media (min-width: 1200px) {
 
