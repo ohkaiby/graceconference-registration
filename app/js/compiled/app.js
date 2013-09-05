@@ -1091,7 +1091,7 @@
 					'return_url=http://registration.graceconference.org/'
 				];
 
-			window.location.href = baseUrl +'&'+ encodeURIComponent( params.join( '&' ) );
+			window.location.href = baseUrl +'&'+ params.join( '&' );
 			return false;
 		}
 	};
