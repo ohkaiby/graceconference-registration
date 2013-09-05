@@ -1083,15 +1083,15 @@
 		},
 
 		proceedWithPayment : function() {
-			var urlArr = [
-					'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C',
+			var baseUrl = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C',
+				params = [
 					'amount=' + gc.app.paymentModel.attributes.total_cost,
 					'invoice=' + gc.app.attendee_id,
 					'notify_url=http://registration.graceconference.org/api/set/attendee_payment',
 					'return_url=http://registration.graceconference.org/'
 				];
 
-			window.location.href = encodeURIComponent( urlArr.join( '&' ) );
+			window.location.href = baseUrl +'&'+ encodeURIComponent( params.join( '&' ) );
 			return false;
 		}
 	};
