@@ -25,7 +25,7 @@ class Set {
 
 		$val = $post[ 'value' ];
 
-		$final_values = [];
+		$final_values = array();
 		foreach( $val as $field ) {
 			$final_values[ $field[ 'field' ] ] = $field[ 'value' ];
 		}
