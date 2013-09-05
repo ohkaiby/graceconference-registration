@@ -3,9 +3,9 @@
 namespace Helpers;
 
 class Cache {
-	private $key_expirations = [ // only keys added to this array can be stored / retrieved.
+	private $key_expirations = array( // only keys added to this array can be stored / retrieved.
 		'workshops' => 3600 // 1 hour
-	];
+	);
 
 	public function get( $key ) {
 		global $f3;
