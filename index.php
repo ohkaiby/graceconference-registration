@@ -4,7 +4,7 @@
 
 $f3 = require( 'app/f3/lib/base.php' );
 $config = require( 'config.php' );
-$f3->mset( [
+$f3->mset( array(
 	'DEBUG' => $config[ 'debug' ],
 	'UI' => 'app/views/pages/',
 	'config' => $config,
@@ -17,7 +17,7 @@ $f3->mset( [
 		$config[ 'db_pass' ]
 	),
 	'CACHE' => $config[ 'cache' ]
-] );
+) );
 
 // controllers
 
