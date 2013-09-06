@@ -34,7 +34,7 @@ class Email {
 
 		$smtp = Mail::factory( 'smtp', array(
 			'host' => 'smtp.mandrillapp.com',
-			'port' => 587
+			'port' => 587,
 			'auth' => true,
 			'username' => 'thegraceconference@gmail.com',
 			'password' => '572A9taQ1OcrVHPN-r_eYQ'
