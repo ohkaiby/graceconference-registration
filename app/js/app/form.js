@@ -1002,9 +1002,9 @@
 
 		setRegistrationCost : function() {
 			var dateCutoffs = {
-					early : ( new Date( '2013-09-15 11:59:59' ) ).getTime(),
-					regular : ( new Date( '2013-11-30 11:59:59' ) ).getTime(),
-					late : ( new Date( '2013-12-10 11:59:59' ) ).getTime()
+					early : ( new Date( 'Sun Sep 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
+					regular : ( new Date( 'Fri Nov 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
+					late : ( new Date( 'Tue Dec 10 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime()
 				},
 				now = Date.now(),
 				cost;
@@ -1014,7 +1014,7 @@
 			} else if ( now <= dateCutoffs.early ) {
 				cost = 10;
 			} else if ( now <= dateCutoffs.regular ) {
-				cost = 20;
+				cost = 15;
 			} else {
 				cost = 25;
 			}
