@@ -22,24 +22,32 @@ class Email {
 	}
 
 	public function send( $email, $subject, $html ) {
-		require_once "/home4/gracecon/php/Mail.php";
+		require_once '../../../libraries/PHPMailer/class.phpmailer.php';
 
-		$headers = array(
-			'From' => 'Grace 2013 <info@graceconference.org>',
-			'To' => $email,
-			'Subject' => $subject,
-			'MIME-Version' => '1.0',
-			'Content-type' => 'text/html; charset=iso-8859-1'
-		);
+		$mail = new PHPMailer;
 
-		$smtp = Mail::factory( 'smtp', array(
-			'host' => 'smtp.mandrillapp.com',
-			'port' => 587,
-			'auth' => true,
-			'username' => 'thegraceconference@gmail.com',
-			'password' => '572A9taQ1OcrVHPN-r_eYQ'
-		) );
+		$mail->IsSMTP();
+		$mail->Host = 'smtp.mandrillapp.com';                 // Specify main and backup server
+		$mail->SMTPAuth = true;                               // Enable SMTP authentication
+		$mail->Port = 587;
+		$mail->Username = 'thegraceconference@gmail.com';     // SMTP username
+		$mail->Password = '572A9taQ1OcrVHPN-r_eYQ';           // SMTP password
+		// $mail->SMTPSecure = 'tls';                            // Enable encryption, 'ssl' also accepted
 
-		$mail = $smtp->send( $email, $headers, $html );
+		$mail->From = 'info@graceconference.org';
+		$mail->FromName = 'Grace 2013';
+		$mail->AddAddress($email);  // Add a recipient
+		$mail->AddReplyTo('info@graceconference.org', 'Grace 2013');
+
+		// $mail->WordWrap = 50;                                 // Set word wrap to 50 characters
+		// $mail->AddAttachment('/var/tmp/file.tar.gz');         // Add attachments
+		// $mail->AddAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+		$mail->IsHTML(true);                                  // Set email format to HTML
+
+		$mail->Subject = $subject;
+		$mail->Body    = $html;
+		// $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+		$send = $mail->Send();
 	}
 }

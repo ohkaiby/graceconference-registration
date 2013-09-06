@@ -1,5 +1,4 @@
 <?php
-
 // setup
 
 $f3 = require( 'app/f3/lib/base.php' );
@@ -20,7 +19,6 @@ $f3->mset( array(
 ) );
 
 // controllers
-
 $f3->set( 'AUTOLOAD', 'app/classes/' );
 $Get = new API\Get;
 $Set = new API\Set;
