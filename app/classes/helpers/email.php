@@ -23,7 +23,9 @@ class Email {
 
 	public function send( $email, $subject, $html ) {
 		global $f3;
-		require_once $f3->get( 'config' )[ 'base_path' ] .'/app/libraries/PHPMailer/class.phpmailer.php';
+
+		$config = $f3->get( 'config' );
+		require_once $config[ 'base_path' ] .'/app/libraries/PHPMailer/class.phpmailer.php';
 
 		$mail = new PHPMailer;
 
