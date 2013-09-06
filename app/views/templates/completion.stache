@@ -4,3 +4,5 @@
 {{#hasChildren}}
 <p class="completion-text">You’ll need to register your children as well.</p>
 {{/hasChildren}}
+<br><br>
+<button class="js-restart-form btn btn-large" type="submit">Register for someone else</button>

@@ -48,3 +48,6 @@
 		</tr>
 	</tbody>
 </table>
+<div class="payment-extras-container">
+	<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over</a>
+</div>

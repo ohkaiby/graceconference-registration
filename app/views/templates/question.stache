@@ -193,7 +193,7 @@
 			{{/info}}
 
 			<div class="extras-container">
-				<a class="js-reset-form" href="javascript:void(0);">Start Over</a>
+				<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over</a>
 			</div>
 	</fieldset>
 </form>

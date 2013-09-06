@@ -326,7 +326,11 @@
 
 	t.resetForm = function() {
 		gc.app.localstorage.clear();
-		gc.app.answersCollection.reset();
+
+		return $.post( '/api/set/reset_registration' ).done( function() {
+			gc.app.session = {};
+			gc.app.answersCollection.reset();
+		} );
 	};
 
 	t.questionsModelCore = { // a single question
@@ -796,9 +800,11 @@
 		},
 
 		resetForm : function() {
-			this.$el.detach().empty();
+			var self = this;
 
-			gc.app.resetForm();
+			gc.app.resetForm().done( function() {
+				self.$el.detach().empty();
+			} );
 
 			return false;
 		},
@@ -1034,7 +1040,8 @@
 
 	t.paymentViewCore = {
 		events : {
-			'click .js-pay' : 'proceedWithPayment'
+			'click .js-pay' : 'proceedWithPayment',
+			'click .js-reset-form' : 'resetForm'
 		},
 
 		initialize : function() {
@@ -1093,13 +1100,22 @@
 
 			window.location.href = baseUrl +'&'+ params.join( '&' );
 			return false;
+		},
+
+		resetForm : function() {
+			var self = this;
+
+			gc.app.resetForm().done( function() {
+				self.$el.detach().empty();
+			} );
+
+			return false;
 		}
 	};
 
 	t.completionViewCore = {
 		events : {
-			'click .js-reset-for-child-registration' : 'resetForChild',
-			'click .js-reset-session' : 'resetEverything'
+			'click .js-restart-form' : 'resetForm'
 		},
 
 		initialize : function() {
@@ -1114,11 +1130,15 @@
 			}
 		},
 
-		resetForChild : function() {
-			return false;
-		},
+		resetForm : function( ev ) {
+			var self = this;
 
-		resetEverything : function() {
+			ev.currentTarget.innerHTML = 'Resetting questions…';
+
+			gc.app.resetForm().done( function() {
+				self.$el.detach().empty();
+			} );
+
 			return false;
 		}
 	};

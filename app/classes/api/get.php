@@ -56,7 +56,8 @@ class Get {
 		$id = $f3->get( 'GET.attendee_id' );
 
 		$results = $this->db->exec( 'SELECT paid FROM attendees WHERE id = ?', $id );
-		return $this->formatDataToJSON( array( 'paid' => !empty( $results ) && $results[ 0 ][ 'paid' ] === '1' ) );
+
+		return $this->formatDataToJSON( array( 'paid' => !empty( $results ) && $results[ 0 ][ 'paid' ] ) );
 	}
 
 	public function formatDataToJSON( $data ) {

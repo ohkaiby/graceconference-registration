@@ -15,6 +15,8 @@ class Set {
 			return $this->registerAttendee( $post );
 		} elseif ( $key === 'attendee_payment' ) {
 			return $this->attendeePayment( $post );
+		} elseif ( $key === 'reset_registration' ) {
+			return $this->resetRegistration();
 		}
 
 		return $this->formatDataToJSON( array( 'error' => 'key not recognized: ' . $key ) );
@@ -105,6 +107,13 @@ class Set {
 		} else {
 			return $this->formatDataToJSON( array( 'status' => 'error' ) );
 		}
+	}
+
+	private function resetRegistration() {
+		global $f3;
+
+		$f3->set( 'SESSION', array() );
+		return $this->formatDataToJSON( array( 'status' => 'success' ) );
 	}
 
 	public function formatDataToJSON( $data ) {
