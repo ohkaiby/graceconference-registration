@@ -3,16 +3,6 @@
 namespace Helpers;
 
 class Email {
-	private $email;
-	private $subject;
-	private $message;
-
-	public function __construct( $email=null, $subject=null, $message=null ) {
-		$this->email = $email;
-		$this->subject = $subject;
-		$this->message = $message;
-	}
-
 	public function sendRegistrationConfirmation( $attendee_id ) {
 		global $f3;
 
@@ -28,20 +18,16 @@ class Email {
 		$html .= '<p>We look forward to seeing you!</p>';
 		$html .= '<br><br>Grace Conference 2013';
 
-		$this->email = $fields[ 'email' ];
-		$this->subject = 'Grace 2013 Registration Confirmation';
-		$this->message = $html;
-
-		$this->send();
+		$this->send( $fields[ 'email' ], 'Grace 2013 Registration Confirmation', $html );
 	}
 
-	public function send() {
+	public function send( $email, $subject, $html ) {
 		require_once "Mail.php";
 
 		$headers = array(
 			'From' => 'Grace 2013 <info@graceconference.org>',
-			'To' => $this->email,
-			'Subject' => $this->subject,
+			'To' => $email,
+			'Subject' => $subject,
 			'MIME-Version' => '1.0',
 			'Content-type' => 'text/html; charset=iso-8859-1'
 		);
@@ -54,6 +40,6 @@ class Email {
 			'password' => '572A9taQ1OcrVHPN-r_eYQ'
 		) );
 
-		$mail = $smtp->send( $this->email, $headers, $this->message );
+		$mail = $smtp->send( $email, $headers, $html );
 	}
 }

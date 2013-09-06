@@ -84,7 +84,7 @@ class Set {
 	}
 
 	private function attendeePayment( $post ) { // this is the paypal callback
-		global $f3;
+		global $f3, $Email;
 
 		$amount = $post[ 'mc_gross' ];
 		$id = $post[ 'invoice' ];
@@ -99,8 +99,7 @@ class Set {
 		);
 
 		if ( $result === 1 ) {
-			$email = new Helpers\Email();
-			$email->sendRegistrationConfirmation( $id );
+			$Email->sendRegistrationConfirmation( $id );
 
 			return $this->formatDataToJSON( array( 'status' => 'success' ) );
 		} else {

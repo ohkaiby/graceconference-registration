@@ -25,6 +25,7 @@ $f3->set( 'AUTOLOAD', 'app/classes/' );
 $Get = new API\Get;
 $Set = new API\Set;
 $Cache = new Helpers\Cache;
+$Email = new Helpers\Email;
 
 // api stuff
 
