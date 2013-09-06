@@ -20,6 +20,14 @@ $f3->mset( array(
 ) );
 
 // controllers
+require_once "Mail.php";
+$mail = Mail::factory( 'smtp', array(
+	'host' => 'smtp.mandrillapp.com',
+	'port' => 587,
+	'auth' => true,
+	'username' => 'thegraceconference@gmail.com',
+	'password' => '572A9taQ1OcrVHPN-r_eYQ'
+) );
 
 $f3->set( 'AUTOLOAD', 'app/classes/' );
 $Get = new API\Get;

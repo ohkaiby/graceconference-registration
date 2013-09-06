@@ -22,7 +22,7 @@ class Email {
 	}
 
 	public function send( $email, $subject, $html ) {
-		require_once "Mail.php";
+		global $mail;
 
 		$headers = array(
 			'From' => 'Grace 2013 <info@graceconference.org>',
@@ -32,14 +32,6 @@ class Email {
 			'Content-type' => 'text/html; charset=iso-8859-1'
 		);
 
-		$smtp = Mail::factory( 'smtp', array(
-			'host' => 'smtp.mandrillapp.com',
-			'port' => 587,
-			'auth' => true,
-			'username' => 'thegraceconference@gmail.com',
-			'password' => '572A9taQ1OcrVHPN-r_eYQ'
-		) );
-
-		$mail = $smtp->send( $email, $headers, $html );
+		$send = $mail->send( $email, $headers, $html );
 	}
 }
