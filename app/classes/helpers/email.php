@@ -22,7 +22,7 @@ class Email {
 	}
 
 	public function send( $email, $subject, $html ) {
-		require_once '../../../libraries/PHPMailer/class.phpmailer.php';
+		require_once '../../libraries/PHPMailer/class.phpmailer.php';
 
 		$mail = new PHPMailer;
 
