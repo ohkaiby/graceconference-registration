@@ -1,6 +1,10 @@
 <form class="{{#text}}form-inline{{/text}}{{#radio}}form{{/radio}}" method="post">
 	<fieldset>
-		<legend class="question-title title">{{question}}</legend>
+		<legend class="question-title title">
+			{{#child}}Please fill in {{child_name}}’s information.{{/child}}
+
+			{{^child}}{{question}}{{/child}}
+		</legend>
 
 			{{#text}}
 			<div class="fields">
@@ -11,7 +15,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}">
+					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
 				</div>
 				{{/answers}}
 			</div>
@@ -45,7 +49,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}">
+					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
 				</div>
 				{{/answers}}
 			</div>
@@ -61,7 +65,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}">
+					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
 				</div>
 				{{/answers}}
 			</div>

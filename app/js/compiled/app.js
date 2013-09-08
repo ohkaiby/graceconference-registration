@@ -1,4 +1,4 @@
-;( function( $, _, Backbone, Modernizr, tester, undefined ) {
+;( function( $, _, Backbone, Modernizr, tester, gc, undefined ) {
 	'use strict';
 
 	var t = tester || {};
@@ -10,10 +10,14 @@
 		gc.app.questionsCollection = new ( Backbone.Collection.extend( t.questionsCollectionCore ) )();
 
 		gc.models.answer = Backbone.Model.extend( t.answerModelCore );
-		gc.app.answersCollection = new ( Backbone.Collection.extend( t.answersCollectionCore ) )();
+		gc.collections.answer = Backbone.Collection.extend( t.answersCollectionCore );
+		gc.app.answersCollection = new gc.collections.answer();
+
+		gc.models.children = Backbone.Model.extend( t.childrenModelCore );
 		gc.app.childrenCollection = new ( Backbone.Collection.extend( t.childrenCollectionCore ) )();
 
-		gc.app.mealCostModel = new ( Backbone.Model.extend( t.mealCostModelCore ) )();
+		gc.models.mealCost = Backbone.Model.extend( t.mealCostModelCore );
+		gc.app.mealCostModel = new gc.models.mealCost();
 
 		gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionsCollection } );
 		// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answersCollection } );
@@ -273,18 +277,22 @@
 		// building questions
 		for ( i = 0; i < questions.length; i++ ) {
 			gc.app.questionsCollection.add( new gc.models.question( questions[ i ] ) );
-			t.fillSavedAnswer( questions[ i ] );
+			t.fillSavedAnswer( questions[ i ], gc.app.answersCollection );
 		}
+
+		t.fillSavedChildrenAnswers();
 	};
 
-	t.fillSavedAnswer = function( question ) {
+	t.fillSavedAnswer = function( question, answersCollection, storagePrefix ) {
 		var i,
 			savedAnswer;
 
+		!storagePrefix && ( storagePrefix = '' );
+
 		if ( question.answer_type === 'text' || question.answer_type === 'email' || question.answer_type === 'phone' ) {
 			for ( i = 0; i < question.answers.length; i++ ) {
-				if ( savedAnswer = gc.app.localstorage.load( question.answers[ i ].name ) ) {
-					gc.app.answersCollection.add( new gc.models.answer( {
+				if ( savedAnswer = gc.app.localstorage.load( storagePrefix + question.answers[ i ].name ) ) {
+					answersCollection.add( new gc.models.answer( {
 						field : question.answers[ i ].name,
 						value : savedAnswer,
 						display : question.answers[ i ].display,
@@ -294,16 +302,16 @@
 			}
 		} else if (
 				( question.answer_type === 'radio' || question.answer_type === 'meal_plan' ) &&
-				( savedAnswer = gc.app.localstorage.load( question.question_name ) )
+				( savedAnswer = gc.app.localstorage.load( storagePrefix + question.question_name ) )
 		) {
-			gc.app.answersCollection.add( new gc.models.answer( {
+			answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : savedAnswer,
 				display : question.display,
 				associated_question : question.question_name
 			} ) );
-		} else if ( question.answer_type === 'children' && ( savedAnswer = gc.app.localstorage.load( question.question_name ) ) ) {
-			gc.app.answersCollection.add( new gc.models.answer( {
+		} else if ( question.answer_type === 'children' && ( savedAnswer = gc.app.localstorage.load( storagePrefix + question.question_name ) ) ) {
+			answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : savedAnswer,
 				display : question.display,
@@ -312,15 +320,27 @@
 
 			savedAnswer = JSON.parse( savedAnswer );
 			for ( i = 0; i < savedAnswer.length; i++ ) {
-				gc.app.childrenCollection.add( new Backbone.Model( savedAnswer[ i ] ) );
+				gc.app.childrenCollection.add( new gc.models.children( savedAnswer[ i ] ) );
 			}
-		} else if ( gc.app.localstorage.load( question.question_name ) && ( question.answer_type === 'agreement' || question.answer_type === 'info' ) ) {
-			gc.app.answersCollection.add( new gc.models.answer( {
+		} else if ( gc.app.localstorage.load( storagePrefix + question.question_name ) && ( question.answer_type === 'agreement' || question.answer_type === 'info' ) ) {
+			answersCollection.add( new gc.models.answer( {
 				field : question.question_name,
 				value : true,
 				display : question.display,
 				associated_question : question.question_name
 			} ) );
+		}
+	};
+
+	t.fillSavedChildrenAnswers = function() {
+		var storagePrefix, i, j;
+
+		for ( i = 0; i < gc.app.childrenCollection.length; i++ ) {
+			storagePrefix = gc.app.childrenCollection.models[ i ].attributes.name + '_';
+
+			for ( j = 0; j < gc.app.questionsCollection.length; j++ ) {
+				t.fillSavedAnswer( gc.app.questionsCollection.models[ j ].attributes, gc.app.childrenCollection.models[ i ].answersCollection, storagePrefix );
+			}
 		}
 	};
 
@@ -353,8 +373,8 @@
 
 			for ( i = 0; i < this.models.length; i++ ) {
 				if (
-						!gc.app.answersCollection.findWhere( { associated_question : this.models[ i ].get( 'question_name' ) } ) &&
-						this.validateDependencies( this.models[ i ] )
+						!gc.app.answersCollection.findWhere( { associated_question : this.models[ i ].attributes.question_name } ) &&
+						this.validateDependencies( this.models[ i ], gc.app.answersCollection )
 				) {
 					return this.models[ i ];
 				}
@@ -363,8 +383,25 @@
 			return false; // all questions answered
 		},
 
+		getChildrenFirstUnansweredQuestion : function( answersCollection ) {
+			var questionsToSkip = [ 'age', 'bringing_children', 'children_details', 'hotel_code_of_conduct' ],
+				i;
+
+			for ( i = 0; i < this.models.length; i++ ) {
+				if (
+						$.inArray( this.models[ i ].attributes.question_name, questionsToSkip ) === -1 &&
+						!answersCollection.findWhere( { associated_question : this.models[ i ].attributes.question_name } ) &&
+						this.validateDependencies( this.models[ i ], answersCollection )
+				) {
+					return this.models[ i ];
+				}
+			}
+
+			return false;
+		},
+
 		// checks if question depends on any other questions and returns true if it does not depend on any other questions to be answered OR if the dependent questions have been answered with the correct answer
-		validateDependencies : function( questionModel ) {
+		validateDependencies : function( questionModel, answersCollection ) {
 			var answerCurrentQuestionDependsOn = questionModel.get( 'depends_on' ),
 				questionType = questionModel.get( 'answer_type' ),
 				savedDependentQuestion,
@@ -373,13 +410,13 @@
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
 				if ( questionType === 'text' || questionType === 'radio' || questionType === 'info' || questionType === 'children' ) {
-					savedDependentQuestion = gc.app.answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
+					savedDependentQuestion = answersCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
 				} else if ( questionType === 'email' || questionType === 'phone' ) {
 					textAnswers = questionModel.get( 'answers' );
 
 					for ( i = 0; i < textAnswers.length; i++ ) {
 						if ( answerCurrentQuestionDependsOn.question_name = textAnswers[ i ].name ) {
-							savedDependentQuestion = gc.app.answersCollection.findWhere( { field : textAnswers[ i ].name } );
+							savedDependentQuestion = answersCollection.findWhere( { field : textAnswers[ i ].name } );
 							break;
 						}
 					}
@@ -413,6 +450,71 @@
 		}
 	};
 
+	t.childrenModelCore = {
+		defaults : {
+			all_questions_completed : false
+		},
+
+		initialize : function() {
+			_.bindAll( this );
+
+			this.mealCostModel = new gc.models.mealCost();
+			this.answersCollection = new gc.collections.answer(); // the confirmed answers
+			this.limboAnswersCollection = new gc.collections.answer(); // we're not confirming any of these answers yet. going to autofill the inputs even though they're inheriting answers from parents rather than skipping the questions.
+
+			this.initRealAge().inheritParentInformation();
+		},
+
+		initRealAge : function() { // converts the age that parents wrote down into a parsable age.
+			var ageQuestion = gc.app.questionsCollection.findWhere( { question_name : 'age' } ),
+				parsableAge;
+
+			if ( this.attributes.age <= 11 ) {
+				parsableAge = '11';
+			} else if ( this.attributes.age >= 12 && this.attributes.age <= 17 ) {
+				parsableAge = '12_17';
+			} else {
+				parsableAge = '18';
+			}
+
+			this.answersCollection.add( new gc.models.answer( {
+				field : 'age',
+				value : parsableAge,
+				display : ageQuestion.attributes.display,
+				associated_question : 'age'
+			} ) );
+
+			return this;
+		},
+
+		inheritParentInformation : function() { // copies some information from parents to limbo answers
+			var answersToInherit = [ 'name', 'email', 'phone', 'address', 'city', 'state', 'zip' ],
+				i;
+
+			for ( i = 0; i < answersToInherit.length; i++ ) {
+				if ( answersToInherit[ i ] === 'name' ) {
+					this.limboAnswersCollection.add( new gc.models.answer( {
+						field : 'first_name',
+						value : this.attributes.name,
+						display : 'First Name',
+						associated_question : 'name'
+					} ) );
+
+					this.limboAnswersCollection.add( new gc.models.answer( {
+						field : 'last_name',
+						value : gc.app.answersCollection.findWhere( { field : 'last_name' } ).attributes.value,
+						display : 'Last Name',
+						associated_question : 'name'
+					} ) );
+				} else {
+					this.limboAnswersCollection.add( new gc.models.answer( gc.app.answersCollection.findWhere( { field : answersToInherit[ i ] } ).attributes ) );
+				}
+			}
+
+			return this;
+		}
+	};
+
 	t.childrenCollectionCore = {
 
 	};
@@ -435,11 +537,15 @@
 		},
 
 		render : function() {
-			var questionModel = gc.app.selected.question = this.collection.getFirstUnansweredQuestion();
-
 			if ( this.$el.parent().length === 0 ) {
 				this.$el.appendTo( '#view-container' );
 			}
+
+			this[ gc.app.childrenCollection.length === 0 ? 'renderParent' : 'renderChild' ]();
+		},
+
+		renderParent : function() {
+			var questionModel = gc.app.selected.question = this.collection.getFirstUnansweredQuestion();
 
 			if ( !questionModel ) { // all questions are answered
 				this.renderCheckAnswers();
@@ -452,8 +558,46 @@
 			}
 		},
 
-		renderQuestion : function( stache ) {
+		renderChild : function() {
+			var firstUncompletedChildrenModel = gc.app.childrenCollection.findWhere( { all_questions_completed : false } ),
+				questionModel;
+
+			if ( !firstUncompletedChildrenModel ) {
+				this.renderParent();
+				return;
+			}
+
+			questionModel = gc.app.selected.question = this.collection.getChildrenFirstUnansweredQuestion( firstUncompletedChildrenModel.answersCollection );
+
+			if ( !questionModel ) { // all questions are answered
+				this.renderCheckAnswers();
+			} else {
+				this.renderQuestion( questionModel.toJSON(), firstUncompletedChildrenModel );
+
+				if ( firstUncompletedChildrenModel.answersCollection.length > 0 ) {
+					this.$el.find( '.extras-container' ).css( 'visibility', 'visible' );
+				}
+			}
+		},
+
+		renderQuestion : function( stache, childrenModel ) {
+			var i,
+				limboAnswer;
+
 			stache[ stache.answer_type ] = true;
+
+			if ( childrenModel ) {
+				stache.child = {
+					child_name : childrenModel.attributes.name
+				};
+
+				for ( i = 0; i < stache.answers.length; i++ ) {
+					limboAnswer = childrenModel.limboAnswersCollection.findWhere( { field : stache.answers[ i ].name } );
+					if ( limboAnswer ) {
+						stache.answers[ i ].value = limboAnswer.attributes.value;
+					}
+				}
+			}
 
 			this.$el.empty().
 				append( gc.template( 'question', stache ) ).
@@ -597,15 +741,26 @@
 					info : genericAnswerFunc,
 					children : this.generateChildrenAnswers
 				},
+				firstUncompletedChildrenModel = gc.app.childrenCollection.findWhere( { all_questions_completed : false } ),
+				answersCollection,
+				storageFieldPrefix,
 				i;
+
+			if ( firstUncompletedChildrenModel ) {
+				answersCollection = firstUncompletedChildrenModel.answersCollection;
+				storageFieldPrefix = firstUncompletedChildrenModel.attributes.name +'_';
+			} else {
+				answersCollection = gc.app.answersCollection;
+				storageFieldPrefix = '';
+			}
 
 			rawAnswerMap[ answerType ] && ( rawAnswers = rawAnswerMap[ answerType ]() );
 
 			for ( i = 0; i < rawAnswers.length; i++ ) {
-				this.addAnswer( rawAnswers[ i ], answersFormattedForCollection );
-				gc.app.localstorage.save( rawAnswers[ i ].field, rawAnswers[ i ].value );
+				this.addAnswer( rawAnswers[ i ], answersFormattedForCollection, answersCollection );
+				gc.app.localstorage.save( storageFieldPrefix + rawAnswers[ i ].field, rawAnswers[ i ].value );
 			}
-			gc.app.answersCollection.add( answersFormattedForCollection );
+			answersCollection[ 'add' ]( answersFormattedForCollection );
 
 			return this;
 		},
@@ -709,7 +864,7 @@
 			}
 
 			for ( i = 0; i < children.length; i++ ) {
-				gc.app.childrenCollection.add( new Backbone.Model( children[ i ] ) );
+				gc.app.childrenCollection.add( new gc.models.children( children[ i ] ) );
 			}
 
 			return [ {
@@ -720,10 +875,10 @@
 			} ];
 		},
 
-		addAnswer : function( rawAnswer, collectedAnswers ) {
+		addAnswer : function( rawAnswer, collectedAnswers, answersCollection ) {
 			var existingAnswer;
 
-			if ( existingAnswer = gc.app.answersCollection.findWhere( { field : rawAnswer.field } ) ) {
+			if ( existingAnswer = answersCollection.findWhere( { field : rawAnswer.field } ) ) {
 				existingAnswer.set( 'value', rawAnswer.value );
 			} else {
 				collectedAnswers.push( new gc.models.answer( rawAnswer ) );
@@ -1205,4 +1360,4 @@
 	gc.init( function() {
 		t.init();
 	} );
-} )( jQuery, _, Backbone, Modernizr, tester );
+} )( jQuery, _, Backbone, Modernizr, tester, gc );
