@@ -1,10 +1,25 @@
 <form class="{{#text}}form-inline{{/text}}{{#radio}}form{{/radio}}" method="post">
+	<p>{{#attendee}}Please fill in {{attendee_name}}’s information.{{/attendee}}</p>
 	<fieldset>
 		<legend class="question-title title">
-			{{#child}}Please fill in {{child_name}}’s information.{{/child}}
-
-			{{^child}}{{question}}{{/child}}
+			{{question}}
 		</legend>
+
+			{{#number_of_attendees}}
+			<div class="fields">
+				<div class="alert alert-error">Please enter the number of attendees that you are registering.</div>
+
+				{{#answers}}
+				<div class="control-group row-fluid">
+					<label class="question-field control-label span5" for="{{name}}">
+						{{display}}
+					</label>
+					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}" value="1">
+				</div>
+				{{/answers}}
+			</div>
+			<button class="btn btn-large" type="submit">Next</button>
+			{{/number_of_attendees}}
 
 			{{#text}}
 			<div class="fields">
@@ -15,7 +30,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
+					<input id="{{name}}" type="text" class="question-input text span7" name="{{name}}"{{#attendee}}{{#value}} value="{{value}}"{{/value}}{{/attendee}}>
 				</div>
 				{{/answers}}
 			</div>
@@ -49,7 +64,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
+					<input id="{{name}}" type="email" class="question-input text span7" name="{{name}}"{{#attendee}}{{#value}} value="{{value}}"{{/value}}{{/attendee}}>
 				</div>
 				{{/answers}}
 			</div>
@@ -65,7 +80,7 @@
 					<label class="question-field control-label span5" for="{{name}}">
 						{{display}}
 					</label>
-					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}"{{#child}}{{#value}} value="{{value}}"{{/value}}{{/child}}>
+					<input id="{{name}}" type="tel" class="question-input text span7" name="{{name}}"{{#attendee}}{{#value}} value="{{value}}"{{/value}}{{/attendee}}>
 				</div>
 				{{/answers}}
 			</div>
@@ -197,7 +212,14 @@
 			{{/info}}
 
 			<div class="extras-container">
-				<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over</a>
+				<a class="js-reset-form-for-attendee reset-form-link" href="javascript:void(0);">
+					Start Over
+					{{#more_than_one_attendee}} for {{#attendee}}{{attendee_name}}{{/attendee}}{{/more_than_one_attendee}}
+				</a>
+
+				{{#more_than_one_attendee}}
+				<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over For Everyone</a>
+				{{/more_than_one_attendee}}
 			</div>
 	</fieldset>
 </form>
