@@ -14,19 +14,15 @@
 
 			gc.models.answer = Backbone.Model.extend( t.answerModelCore );
 			gc.collections.answer = Backbone.Collection.extend( t.answerCollectionCore );
-			// gc.app.answerCollection = new gc.collections.answer();
 
 			gc.models.attendee = Backbone.Model.extend( t.attendeeModelCore );
 			gc.app.attendeeCollection = new ( Backbone.Collection.extend( t.attendeeCollectionCore ) )();
 
-			gc.models.mealCost = Backbone.Model.extend( t.mealCostModelCore );
-			gc.app.mealCostModel = new gc.models.mealCost();
-
 			gc.app.formView = new ( Backbone.View.extend( t.formViewCore ) )( { collection : gc.app.questionCollection } );
-			// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )( { collection : gc.app.answerCollection } );
-			gc.app.reviewView = new ( Backbone.View.extend( t.reviewViewCore ) )( { collection : gc.app.answerCollection } );
+			// gc.app.progressBarView = new ( Backbone.View.extend( t.progressBarViewCore ) )();
+			gc.app.reviewView = new ( Backbone.View.extend( t.reviewViewCore ) )();
 
-			gc.app.paymentModel = new ( Backbone.Model.extend( t.paymentModelCore ) )();
+			gc.models.payment = Backbone.Model.extend( t.paymentModelCore );
 			gc.app.paymentView = new ( Backbone.View.extend( t.paymentViewCore ) )();
 
 			gc.app.completionView = new ( Backbone.View.extend( t.completionViewCore ) )();
@@ -51,7 +47,7 @@
 				gc.app.formView.render();
 			}
 
-			gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
+			// gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
 		},
 
 		fillQuestions : function() {
@@ -81,7 +77,7 @@
 						question : 'What is your email?',
 						answer_type : 'email',
 						answers : [
-							{ name : 'email', display : 'Email Address' }
+							{ name : 'email', display : 'Email' }
 						]
 					},
 
@@ -163,7 +159,7 @@
 						question : 'What’s your phone number?',
 						answer_type : 'phone',
 						answers : [
-							{ name : 'phone', display : 'Phone number' }
+							{ name : 'phone', display : 'Phone' }
 						]
 					},
 
@@ -243,39 +239,9 @@
 						],
 						depends_on : {
 							question_name : 'age',
-							answer_names : [ '12_17' ]
+							answer_names : [ '11', '12_17' ]
 						}
 					},
-
-					// {
-					// 	question_name : 'bringing_children',
-					// 	question : 'Are you bringing any children?',
-					// 	display : 'Bringing children',
-					// 	answer_type : 'radio',
-					// 	answers : [
-					// 		{ name : 'yes', display : 'Yes' },
-					// 		{ name : 'no', display : 'No' }
-					// 	],
-					// 	depends_on : {
-					// 		question_name : 'status',
-					// 		answer_names : [ 'single', 'married' ]
-					// 	}
-					// },
-
-					// {
-					// 	question_name : 'children_details',
-					// 	display : 'Children',
-					// 	question : 'Please list your children.',
-					// 	answer_type : 'children',
-					// 	answers : [
-					// 		{ name : 'name', display : 'Name' },
-					// 		{ name : 'age', display : 'Age' }
-					// 	],
-					// 	depends_on : {
-					// 		question_name : 'bringing_children',
-					// 		answer_names : [ 'yes' ]
-					// 	}
-					// },
 
 					{
 						question_name : 'hotel_code_of_conduct',
@@ -301,14 +267,16 @@
 			}
 
 			for ( i = 0; i < numberOfAttendees; i++ ) {
-				gc.app.attendeeCollection.add( new gc.models.attendee( { storage_prefix : 'attendee_' + i } ) );
+				gc.app.attendeeCollection.add( new gc.models.attendee( { storage_prefix : 'attendee_' + i, all_questions_completed : gc.app.localstorage.load( 'attendee_' + i +'.'+ 'all_questions_completed' ) } ) );
 			}
 
-			for ( i = 0; i < gc.app.attendeeCollection.length; i++ ) {
-				for ( j = 0; j < gc.app.questionCollection.length; j++ ) {
-					this.fillSavedAnswer( gc.app.questionCollection.models[ j ].attributes, gc.app.attendeeCollection.models[ i ] );
+			for ( i = 0; i < gc.app.questionCollection.length; i++ ) {
+				for ( j = 0; j < gc.app.attendeeCollection.length; j++ ) {
+					this.fillSavedAnswer( gc.app.questionCollection.models[ i ].attributes, gc.app.attendeeCollection.models[ j ] );
 				}
 			}
+
+			gc.app.attendeeCollection.fillLimboAnswers();
 		},
 
 		fillSavedAnswer : function( question, attendee ) {
@@ -336,18 +304,6 @@
 					display : question.display,
 					associated_question : question.question_name
 				} ) );
-			} else if ( question.answer_type === 'children' && ( savedAnswer = gc.app.localstorage.load( attendee.attributes.storage_prefix +'.'+ question.question_name ) ) ) {
-				attendee.answerCollection.add( new gc.models.answer( {
-					field : question.question_name,
-					value : savedAnswer,
-					display : question.display,
-					associated_question : question.question_name
-				} ) );
-
-				savedAnswer = JSON.parse( savedAnswer );
-				for ( i = 0; i < savedAnswer.length; i++ ) {
-					gc.app.attendeeCollection.add( new gc.models.attendee( savedAnswer[ i ] ) );
-				}
 			} else if ( gc.app.localstorage.load( attendee.attributes.storage_prefix +'.'+ question.question_name ) && ( question.answer_type === 'agreement' || question.answer_type === 'info' ) ) {
 				attendee.answerCollection.add( new gc.models.answer( {
 					field : question.question_name,
@@ -379,24 +335,6 @@
 	};
 
 	t.questionCollectionCore = { // the collection of all questions
-		initialize : function() {
-			_.bindAll( this );
-		},
-
-		getFirstUnansweredQuestion : function() {
-			var i;
-
-			for ( i = 0; i < this.models.length; i++ ) {
-				if (
-						!gc.app.answerCollection.findWhere( { associated_question : this.models[ i ].attributes.question_name } ) &&
-						this.validateDependencies( this.models[ i ], gc.app.answerCollection )
-				) {
-					return this.models[ i ];
-				}
-			}
-
-			return false; // all questions answered
-		}
 	};
 
 	t.attendeeModelCore = {
@@ -409,9 +347,11 @@
 		initialize : function() {
 			_.bindAll( this );
 
-			this.mealCostModel = new gc.models.mealCost();
-			this.answerCollection = new gc.collections.answer(); // the confirmed answers
-			this.limboAnswerCollection = new gc.collections.answer(); // we're not confirming any of these answers yet. going to autofill the inputs even though they're inheriting answers from parents rather than skipping the questions.
+			this.paymentModel = new gc.models.payment( this );
+			this.answerCollection = new gc.collections.answer( undefined, undefined, this ); // the confirmed answers
+			this.limboAnswerCollection = new gc.collections.answer( undefined, undefined, this ); // we're not confirming any of these answers yet. going to autofill the inputs even though they're inheriting answers from parents rather than skipping the questions.
+
+			this.on( 'change:all_questions_completed', this.save );
 		},
 
 		getFirstUnansweredQuestion : function() {
@@ -440,7 +380,7 @@
 				i;
 
 			if ( answerCurrentQuestionDependsOn.answer_names ) { // this question depends on another question to be answered
-				if ( questionType === 'text' || questionType === 'radio' || questionType === 'info' || questionType === 'children' ) {
+				if ( questionType === 'text' || questionType === 'radio' || questionType === 'info' ) {
 					savedDependentQuestion = this.answerCollection.findWhere( { field : answerCurrentQuestionDependsOn.question_name } );
 				} else if ( questionType === 'email' || questionType === 'phone' ) {
 					textAnswers = questionModel.get( 'answers' );
@@ -459,53 +399,21 @@
 			return true;
 		},
 
-		initRealAge : function() { // converts the age that parents wrote down into a parsable age.
-			var ageQuestion = gc.app.questionCollection.findWhere( { question_name : 'age' } ),
-				parsableAge;
-
-			if ( this.attributes.age <= 11 ) {
-				parsableAge = '11';
-			} else if ( this.attributes.age >= 12 && this.attributes.age <= 17 ) {
-				parsableAge = '12_17';
-			} else {
-				parsableAge = '18';
-			}
-
-			this.answerCollection.add( new gc.models.answer( {
-				field : 'age',
-				value : parsableAge,
-				display : ageQuestion.attributes.display,
-				associated_question : 'age'
-			} ) );
-
-			return this;
-		},
-
-		inheritParentInformation : function() { // copies some information from parents to limbo answers
-			var answersToInherit = [ 'name', 'email', 'phone', 'address', 'city', 'state', 'zip' ],
+		resetForm : function() {
+			var prefix = this.attributes.storage_prefix,
 				i;
 
-			for ( i = 0; i < answersToInherit.length; i++ ) {
-				if ( answersToInherit[ i ] === 'name' ) {
-					this.limboAnswerCollection.add( new gc.models.answer( {
-						field : 'first_name',
-						value : this.attributes.name,
-						display : 'First Name',
-						associated_question : 'name'
-					} ) );
-
-					this.limboAnswerCollection.add( new gc.models.answer( {
-						field : 'last_name',
-						value : gc.app.answerCollection.findWhere( { field : 'last_name' } ).attributes.value,
-						display : 'Last Name',
-						associated_question : 'name'
-					} ) );
-				} else {
-					this.limboAnswerCollection.add( new gc.models.answer( gc.app.answerCollection.findWhere( { field : answersToInherit[ i ] } ).attributes ) );
-				}
+			for ( i = 0; i < this.answerCollection.length; i++ ) {
+				gc.app.localstorage.remove( prefix +'.'+ this.answerCollection.models[ i ].attributes.field );
 			}
 
-			return this;
+			this.answerCollection.reset();
+			this.set( 'all_questions_completed', false );
+			gc.app.formView.render();
+		},
+
+		save : function() {
+			gc.app.localstorage.save( this.attributes.storage_prefix +'.'+ 'all_questions_completed', true );
 		}
 	};
 
@@ -514,6 +422,8 @@
 			_.bindAll( this );
 
 			this.on( 'add', this.selectFirstIncompleteAttendee );
+			this.on( 'change', this.selectFirstIncompleteAttendee );
+			this.on( 'change:all_questions_completed', this.fillLimboAnswers );
 		},
 
 		selectFirstIncompleteAttendee : function() {
@@ -533,6 +443,24 @@
 			firstIncompleteAttendee.set( 'selected', true );
 			gc.app.selected.attendee = firstIncompleteAttendee;
 			return firstIncompleteAttendee;
+		},
+
+		fillLimboAnswers : function() {
+			var answersToInherit = [ 'last_name', 'email', 'phone', 'address', 'city', 'state', 'zip' ],
+				answersToClone = this.models[ 0 ].answerCollection.toJSON(),
+				i, j;
+
+			if ( this.length < 2 ) {
+				return;
+			}
+
+			for ( i = 0; i < answersToClone.length; i++ ) {
+				if ( $.inArray( answersToClone[ i ].field, answersToInherit ) !== -1 ) {
+					for ( j = 1; j < this.length; j++ ) {
+						this.models[ j ].limboAnswerCollection.add( new gc.models.answer( answersToClone[ i ] ) );
+					}
+				}
+			}
 		}
 	};
 
@@ -546,6 +474,11 @@
 	};
 
 	t.answerCollectionCore = { // collection of all answers
+		initialize : function( models, options, attendeeModel ) {
+			_.bindAll( this );
+			this.attendeeModel = attendeeModel;
+		},
+
 		processForm : function() {
 			return $.ajax( '/api/set/attendee_registration/', {
 				data : {
@@ -563,8 +496,8 @@
 			'submit form' : 'processAnswer',
 			'click .input-radio' : 'processAnswer',
 			'click .js-meal-plan-select-all' : 'allMeals',
-			'click .js-add-child' : 'addChild',
 			'click .js-reset-form' : 'resetForm',
+			'click .js-reset-form-for-attendee' : 'resetFormForCurrentAttendee',
 			'click .js-meal-checkbox' : 'calculateMealCost'
 		},
 
@@ -572,6 +505,7 @@
 			_.bindAll( this );
 
 			gc.app.attendeeCollection.on( 'reset', this.render );
+			gc.app.attendeeCollection.on( 'change', this.render );
 		},
 
 		render : function() {
@@ -585,7 +519,7 @@
 			if ( gc.app.attendeeCollection.length === 0 ) { // render first question to spawn attendees
 				questionModel = gc.app.selected.question = gc.app.questionCollection.findWhere( { question_name : 'number_of_attendees' } );
 			} else { // render first unanswered question for selected attendee
-				selectedAttendee = gc.app.attendeeCollection.findWhere( { selected : true } );
+				selectedAttendee = gc.app.selected.attendee;
 
 				if ( !selectedAttendee ) {
 					this.renderCheckAnswers();
@@ -673,8 +607,7 @@
 					phone : this.validatePhone,
 					meal_plan : this.validateMeals,
 					agreement : genericValidate,
-					info : genericValidate,
-					children : this.validateChildren
+					info : genericValidate
 				};
 
 			if ( validationFunctions[ answerType ] ) {
@@ -738,33 +671,6 @@
 			return true;
 		},
 
-		validateChildren : function() {
-			var $inputEls = this.$el.find( 'input' ),
-				allInputsAreEmpty = true,
-				nameInputVal, ageInputVal, i;
-
-			for ( i = 0; i < $inputEls.length; i++ ) {
-				if ( i % 2 === 0 ) { // name input
-					nameInputVal = $.trim( $inputEls[ i ].value );
-					ageInputVal = parseInt( $.trim( $inputEls[ i + 1 ].value ), 10 );
-				} else { // age input
-					ageInputVal = parseInt( $.trim( $inputEls[ i ].value ), 10 );
-					nameInputVal = $.trim( $inputEls[ i - 1 ].value );
-				}
-
-				if (
-						( _.isEmpty( nameInputVal ) && !_.isNaN( ageInputVal ) ) ||
-						( !_.isEmpty( nameInputVal ) && _.isNaN( ageInputVal ) )
-				) {
-					return false;
-				} else if ( !_.isEmpty( nameInputVal ) && !_.isNaN( ageInputVal ) ) {
-					allInputsAreEmpty = false;
-				}
-			}
-
-			return !allInputsAreEmpty;
-		},
-
 		trimPhoneValue : function( initialValue ) {
 			var phoneNumber = $.trim( initialValue );
 			phoneNumber = phoneNumber.replace( /(\()|(\))|(-)|(\.)|(\s)/gi, '' );
@@ -799,8 +705,7 @@
 					phone : this.generatePhoneAnswers,
 					meal_plan : this.generateMealAnswers,
 					agreement : genericAnswerFunc,
-					info : genericAnswerFunc,
-					children : this.generateChildrenAnswers
+					info : genericAnswerFunc
 				},
 				selectedAttendee = gc.app.attendeeCollection.findWhere( { selected : true } ),
 				i;
@@ -907,38 +812,6 @@
 			} ];
 		},
 
-		generateChildrenAnswers : function() {
-			var questionName = gc.app.selected.question.get( 'question_name' ),
-				$inputs = this.$el.find( 'input[type="text"]' ),
-				children = [],
-				i, tempChild, $tempInput, $tempInput2;
-
-			for ( i = 0; i < $inputs.length; i+=2 ) {
-				tempChild = {};
-				$tempInput = $( $inputs[ i ] );
-				$tempInput2 = $( $inputs[ i + 1 ] );
-
-				tempChild[ $tempInput.data( 'type' ) ] = $tempInput.val();
-				tempChild[ $tempInput2.data( 'type' ) ] = $tempInput2.val();
-				tempChild.age = parseInt( tempChild.age, 10 );
-
-				if ( !_.isEmpty( tempChild.name ) && !_.isNaN( tempChild.age ) ) {
-					children.push( tempChild );
-				}
-			}
-
-			for ( i = 0; i < children.length; i++ ) {
-				gc.app.attendeeCollection.add( new gc.models.attendee( children[ i ] ) );
-			}
-
-			return [ {
-				field : questionName,
-				value : JSON.stringify( children ),
-				display : gc.app.selected.question.get( 'display' ),
-				associated_question : questionName
-			} ];
-		},
-
 		addAnswer : function( rawAnswer, collectedAnswers, answerCollection ) {
 			var existingAnswer;
 
@@ -959,23 +832,13 @@
 			return true;
 		},
 
-		addChild : function() {
-			var $children = this.$el.find( '.children' ).first(),
-				$clone = $children.clone(),
-				$clonedInputs = $clone.find( 'input[type="text"]' ),
-				i;
-
-			for ( i = 0; i < $clonedInputs.length; i++ ) {
-				$clonedInputs[ i ].value = "";
-			}
-
-			$clone.insertAfter( $children );
-			return false;
-		},
-
 		resetForm : function() {
 			gc.app.resetForm();
 			return false;
+		},
+
+		resetFormForCurrentAttendee : function() {
+			gc.app.selected.attendee.resetForm();
 		},
 
 		calculateMealCost : function() {
@@ -983,14 +846,14 @@
 				mealFuncs = { breakfast : 'addBreakfast', lunch : 'addLunch', dinner : 'addDinner' },
 				i;
 
-			gc.app.mealCostModel.resetCosts();
+			gc.app.selected.attendee.paymentModel.resetCosts();
 
 			for ( i = 0; i < $allCheckboxes.length; i++ ) {
-				gc.app.mealCostModel[ mealFuncs[ $( $allCheckboxes[ i ] ).data( 'type' ) ] ]();
+				gc.app.selected.attendee.paymentModel[ mealFuncs[ $( $allCheckboxes[ i ] ).data( 'type' ) ] ]();
 			}
 
 			this.$el.find( '.meal-cost-container' ).css( 'visibility', 'visible' ).
-				find( '.meal-cost' ).empty().append( gc.app.mealCostModel.get( 'total_cost' ) );
+				find( '.meal-cost' ).empty().append( gc.app.selected.attendee.paymentModel.get( 'total_cost' ) );
 		}
 	};
 
@@ -998,7 +861,8 @@
 		className : 'answers',
 		events : {
 			'click .js-correct' : 'processForm',
-			'click .js-incorrect' : 'resetForm'
+			'click .js-reset-form' : 'resetForm',
+			'click .js-reset-form-for-attendee' : 'resetFormForCurrentAttendee'
 		},
 
 		initialize : function() {
@@ -1006,7 +870,7 @@
 		},
 
 		render : function() {
-			if ( gc.app.localstorage.load( 'form_completed_id' ) ) {
+			if ( !gc.app.attendeeCollection.findWhere( { all_questions_completed : false } ) ) {
 				gc.app.paymentView.render();
 				return;
 			}
@@ -1028,13 +892,23 @@
 			return false;
 		},
 
-		processForm : function() {
-			this.$el.find( '.js-correct' ).empty().append( 'Processing…' ).
-				prop( 'disabled', true );
+		resetFormForCurrentAttendee : function() {
+			gc.app.selected.attendee.resetForm();
+		},
 
-			gc.app.answerCollection.processForm().
-				done( this.transitionToPayment ).
-				fail( this.submissionError );
+		processForm : function() {
+			// this.$el.find( '.js-correct' ).empty().append( 'Processing…' ).
+				// prop( 'disabled', true );
+
+			gc.app.selected.attendee.set( 'all_questions_completed', true );
+			this.$el.detach().empty();
+
+			if ( !gc.app.attendeeCollection.findWhere( { all_questions_completed : false } ) ) {
+			}
+
+			// gc.app.answerCollection.processForm().
+			// 	done( this.transitionToPayment ).
+			// 	fail( this.submissionError );
 
 			return false;
 		},
@@ -1068,7 +942,7 @@
 		},
 
 		generateTemplateVars : function() {
-			var rawAnswers = this.collection.toJSON(),
+			var rawAnswers = gc.app.selected.attendee.answerCollection.toJSON(),
 				questions = gc.app.questionCollection.toJSON(),
 				findQuestion = function( question ) { return question.question_name === tempAnswer.associated_question; },
 				genericGenerateAnswer = function( answer ) {
@@ -1079,11 +953,12 @@
 					email : genericGenerateAnswer,
 					phone : genericGenerateAnswer,
 					radio : this.generateRadioAnswer,
-					meal_plan : this.generateMealAnswer,
-					children : this.generateChildrenAnswer
+					meal_plan : this.generateMealAnswer
 				},
 				stache = {
-					answers : []
+					answers : [],
+					more_than_one_attendee : gc.app.attendeeCollection.length > 1,
+					attendee : { attendee_name : gc.app.selected.attendee.answerCollection.findWhere( { field : 'first_name' } ).attributes.value }
 				},
 				tempAnswer, i, tempQuestion;
 
@@ -1133,39 +1008,51 @@
 			return { display : question.display, value : stringArr.join( '<br>' ) };
 		},
 
-		generateChildrenAnswer : function( answer, question ) {
-			var children = JSON.parse( answer.value ),
-				stringArr = [],
-				i;
-
-			for ( i = 0; i < children.length; i++ ) {
-				stringArr.push( children[ i ].name + ' (age '+ children[ i ].age +')' );
-			}
-
-			return { display : question.display, value : stringArr.join( '<br>' ) };
-		},
-
 		reset : function() {
 			this.$el.empty();
 		}
 	};
 
-	t.mealCostModelCore = {
+	t.paymentModelCore = {
 		defaults : {
-			total_cost : 0,
+			registration_cost : 0,
 			cost_from_breakfast : 0,
 			cost_from_lunch : 0,
-			cost_from_dinner : 0
+			cost_from_dinner : 0,
+			total_cost : 0
 		},
 
-		initialize : function() {
+		initialize : function( attendeeModel ) {
 			_.bindAll( this );
+			this.attendeeModel = attendeeModel;
 
-			this.on( 'change', this.calculateTotalCost );
+			this.on( 'change:cost_from_breakfast', this.calculateTotalCost );
+			this.on( 'change:cost_from_lunch', this.calculateTotalCost );
+			this.on( 'change:cost_from_dinner', this.calculateTotalCost );
+			this.on( 'change:registration_cost', this.calculateTotalCost );
 		},
 
-		resetCosts : function() {
-			this.set( { cost_from_breakfast : 0, cost_from_lunch: 0, cost_from_dinner : 0 } );
+		setRegistrationCost : function() {
+			var dateCutoffs = {
+					early : ( new Date( 'Sun Sep 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
+					regular : ( new Date( 'Fri Nov 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
+					late : ( new Date( 'Tue Dec 10 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime()
+				},
+				now = Date.now(),
+				cost;
+
+			if ( this.attendeeModel.answerCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
+				cost = 0;
+			} else if ( now <= dateCutoffs.early ) {
+				cost = 10;
+			} else if ( now <= dateCutoffs.regular ) {
+				cost = 15;
+			} else {
+				cost = 25;
+			}
+
+			this.set( 'registration_cost', cost );
+			return cost;
 		},
 
 		addBreakfast : function() {
@@ -1180,12 +1067,8 @@
 			this.set( 'cost_from_dinner', this.attributes.cost_from_dinner + 8 );
 		},
 
-		calculateTotalCost : function() {
-			this.set( 'total_cost', this.attributes.cost_from_breakfast + this.attributes.cost_from_lunch + this.attributes.cost_from_dinner );
-		},
-
 		calculateTotalCostFromSavedAnswer : function() {
-			var savedMeals = gc.app.answerCollection.find( function( model ) { return model.attributes.field === 'meal_plan'; } );
+			var savedMeals = this.attendeeModel.answerCollection.find( function( model ) { return model.attributes.field === 'meal_plan'; } );
 
 			if ( !savedMeals ) {
 				return false;
@@ -1206,54 +1089,14 @@
 			savedMeals.meal_plan_day_4.dinner && this.addDinner();
 			savedMeals.meal_plan_day_5.breakfast && this.addBreakfast();
 			savedMeals.meal_plan_day_5.lunch && this.addLunch();
-		}
-	};
-
-	t.paymentModelCore = {
-		defaults : {
-			registration_cost : 0,
-			cost_from_meals : 0,
-			total_cost : 0
-		},
-
-		initialize : function() {
-			_.bindAll( this );
-
-			gc.app.mealCostModel.on( 'change:total_cost', this.setCostFromMeals );
-
-			this.on( 'change:cost_from_meals', this.calculateTotalCost );
-			this.on( 'change:registration_cost', this.calculateTotalCost );
-		},
-
-		setRegistrationCost : function() {
-			var dateCutoffs = {
-					early : ( new Date( 'Sun Sep 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
-					regular : ( new Date( 'Fri Nov 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
-					late : ( new Date( 'Tue Dec 10 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime()
-				},
-				now = Date.now(),
-				cost;
-
-			if ( gc.app.answerCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
-				cost = 0;
-			} else if ( now <= dateCutoffs.early ) {
-				cost = 10;
-			} else if ( now <= dateCutoffs.regular ) {
-				cost = 15;
-			} else {
-				cost = 25;
-			}
-
-			this.set( 'registration_cost', cost );
-			return cost;
-		},
-
-		setCostFromMeals : function() {
-			this.set( 'cost_from_meals', gc.app.mealCostModel.attributes.total_cost );
 		},
 
 		calculateTotalCost : function() {
-			this.set( 'total_cost', this.attributes.registration_cost + this.attributes.cost_from_meals );
+			this.set( 'total_cost', this.attributes.registration_cost + this.attributes.cost_from_breakfast + this.attributes.cost_from_lunch + this.attributes.cost_from_dinner );
+		},
+
+		resetCosts : function() {
+			this.set( { cost_from_breakfast : 0, cost_from_lunch : 0, cost_from_dinner : 0, total_cost : 0 } );
 		}
 	};
 
@@ -1277,33 +1120,45 @@
 
 		generatePaymentTemplateVars : function() {
 			var stache = {
-					name : gc.app.answerCollection.findWhere( { field : 'first_name' } ).attributes.value +' '+ gc.app.answerCollection.findWhere( { field : 'last_name' } ).attributes.value
+					attendees : [],
+					total_cost : 0,
+					more_than_one_attendee : gc.app.attendeeCollection.length > 1
 				},
-				meals = JSON.parse( gc.app.answerCollection.findWhere( { field : 'meal_plan' } ).attributes.value ),
 				mealQuestions = gc.app.questionCollection.findWhere( { question_name : 'meal_plan' } ).attributes.answers,
-				breakfasts = [],
-				lunches = [],
-				dinners = [],
-				i;
+				meals,
+				breakfasts,
+				lunches,
+				dinners,
+				i, j;
 
-			stache.registration_cost = gc.app.paymentModel.setRegistrationCost();
-			gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
-			gc.app.paymentModel.calculateTotalCost();
-			stache.total_meal_cost = gc.app.mealCostModel.attributes.total_cost;
-			stache.breakfast_cost = gc.app.mealCostModel.attributes.cost_from_breakfast;
-			stache.lunch_cost = gc.app.mealCostModel.attributes.cost_from_lunch;
-			stache.dinner_cost = gc.app.mealCostModel.attributes.cost_from_dinner;
-			stache.total_cost = gc.app.paymentModel.attributes.total_cost;
+			for ( i = 0; i < gc.app.attendeeCollection.length; i++ ) {
+				breakfasts = [];
+				lunches = [];
+				dinners = [];
 
-			for ( i = 0; i < mealQuestions.length; i++ ) {
-				meals[ mealQuestions[ i ].name ].breakfast && breakfasts.push( mealQuestions[ i ].display );
-				meals[ mealQuestions[ i ].name ].lunch && lunches.push( mealQuestions[ i ].display );
-				meals[ mealQuestions[ i ].name ].dinner && dinners.push( mealQuestions[ i ].display );
+				stache.attendees.push( { name : gc.app.attendeeCollection.models[ i ].answerCollection.findWhere( { field : 'first_name' } ).attributes.value +' '+ gc.app.attendeeCollection.models[ i ].answerCollection.findWhere( { field : 'last_name' } ).attributes.value } );
+
+				meals = JSON.parse( gc.app.attendeeCollection.models[ i ].answerCollection.findWhere( { field : 'meal_plan' } ).attributes.value );
+				stache.attendees[ i ].registration_cost = gc.app.attendeeCollection.models[ i ].paymentModel.setRegistrationCost();
+
+				gc.app.attendeeCollection.models[ i ].paymentModel.calculateTotalCostFromSavedAnswer();
+
+				for ( j = 0; j < mealQuestions.length; j++ ) {
+					meals[ mealQuestions[ j ].name ].breakfast && breakfasts.push( mealQuestions[ j ].display );
+					meals[ mealQuestions[ j ].name ].lunch && lunches.push( mealQuestions[ j ].display );
+					meals[ mealQuestions[ j ].name ].dinner && dinners.push( mealQuestions[ j ].display );
+				}
+
+				stache.attendees[ i ].total_meal_cost = gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_breakfast + gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_lunch + gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_dinner;
+				stache.attendees[ i ].breakfast_cost = gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_breakfast;
+				stache.attendees[ i ].lunch_cost = gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_lunch;
+				stache.attendees[ i ].dinner_cost = gc.app.attendeeCollection.models[ i ].paymentModel.attributes.cost_from_dinner;
+				stache.attendees[ i ].breakfast_days = breakfasts.join( ', ' ) || false;
+				stache.attendees[ i ].lunch_days = lunches.join( ', ' ) || false;
+				stache.attendees[ i ].dinner_days = dinners.join( ', ' ) || false;
+				stache.attendees[ i ].total_cost = gc.app.attendeeCollection.models[ i ].paymentModel.attributes.total_cost;
+				stache.total_cost += gc.app.attendeeCollection.models[ i ].paymentModel.attributes.total_cost;
 			}
-
-			stache.breakfast_days = breakfasts.join( ', ' );
-			stache.lunch_days = lunches.join( ', ' );
-			stache.dinner_days = dinners.join( ', ' );
 
 			return stache;
 		},
@@ -1410,6 +1265,12 @@
 			}
 
 			return result;
+		};
+
+		this.remove = function( key ) {
+			if ( Modernizr.localstorage ) {
+				window.localStorage.removeItem( key );
+			}
 		};
 
 		this.clear = function() {

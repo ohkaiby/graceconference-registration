@@ -11,7 +11,17 @@
 
 	<div class="button-wrapper answers-buttons">
 		<button class="btn btn-large js-correct" type="submit">Yes, It’s Correct</button>
-		<button class="btn btn-large js-incorrect" type="submit">No, Start Over</button>
+	</div>
+
+	<div class="extras-container review-extras-container">
+		<a class="js-reset-form-for-attendee reset-form-link" href="javascript:void(0);">
+			Start Over
+			{{#more_than_one_attendee}} for {{#attendee}}{{attendee_name}}{{/attendee}}{{/more_than_one_attendee}}
+		</a>
+
+		{{#more_than_one_attendee}}
+		<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over For Everyone</a>
+		{{/more_than_one_attendee}}
 	</div>
 
 	<div id="error-modal" class="modal hide fade">

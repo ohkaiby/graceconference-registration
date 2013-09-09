@@ -244,6 +244,9 @@ h3, h4 { font-weight: @buff; }
 	visibility: hidden;
 	margin-top: @gutter-size;
 }
+.review-extras-container {
+	visibility: visible;
+}
 
 .reset-form-link { color: @subtle-text; margin-right: (@gutter-size * 2); }
 
@@ -254,6 +257,7 @@ h3, h4 { font-weight: @buff; }
 
 .payment {
 	&-body { font-size: 14px; }
+	&-item-attendee-name { padding-top: 60px !important; }
 	&-item-major, &-cost-major { font-weight: 600; }
 	&-item-minor, &-cost-minor { color: @subtle-text; }
 	&-item-minor { padding-left: @gutter-size !important; }
@@ -266,6 +270,9 @@ h3, h4 { font-weight: @buff; }
 		display: inline-block;
 		width: 109px; height: 28px;
 		background: url("/app/img/paypal_button.gif") no-repeat scroll left top;
+	}
+	&-extras-container {
+		visibility: visible;
 	}
 }
 
