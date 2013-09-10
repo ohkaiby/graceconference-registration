@@ -57,10 +57,21 @@
 		<tr>
 			<td colspan="2" class="payment-button-wrapper">
 				<a class="payment-paypal-pay js-pay" href="javascript:void(0);"></a>
+				<span class="payment-processing-text">Processing…</span>
 			</td>
 		</tr>
 	</tbody>
 </table>
 <div class="extras-container payment-extras-container">
 	<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over{{#more_than_one_attendee}} For Everyone{{/more_than_one_attendee}}</a>
+</div>
+
+<div id="error-modal" class="modal hide fade">
+	<div class="modal-body">
+		<p>There was an error while we were processing your registration.</p>
+		<p>Please try again later.</p>
+	</div>
+	<div class="modal-footer">
+		<a href="javascript:void(0);" class="btn">Close</a>
+	</div>
 </div>

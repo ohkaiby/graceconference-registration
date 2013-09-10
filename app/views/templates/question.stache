@@ -208,7 +208,9 @@
 				{{/answers}}
 				</div>
 
-				<button class="btn btn-large" type="submit">Next</button>
+				<div class="info-button-wrapper">
+					<button class="btn btn-large info-button" type="submit">Next</button>
+				</div>
 			{{/info}}
 
 			<div class="extras-container">

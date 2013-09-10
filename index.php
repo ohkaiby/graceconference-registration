@@ -44,9 +44,13 @@ $f3->route( 'GET /api/get/@key [ajax]', function( $f3, $params ) {
 } );
 
 // views
-
 $f3->route( 'GET /', function( $f3 ) {
 	echo View::instance()->render( 'form.html' );
+} );
+
+$f3->route( 'GET /payment', function( $f3 ) {
+	$Attendees = new Helpers\Attendees;
+	$Attendees->redirectToPaypal();
 } );
 
 // init

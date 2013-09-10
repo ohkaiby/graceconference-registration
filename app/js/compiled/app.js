@@ -46,12 +46,9 @@
 			} else {
 				gc.app.formView.render();
 			}
-
-			// gc.app.mealCostModel.calculateTotalCostFromSavedAnswer();
 		},
 
 		fillQuestions : function() {
-			// need to handle saved sessions
 			var questions = [
 					{
 						question_name : 'number_of_attendees',
@@ -124,7 +121,7 @@
 						display : 'Status',
 						answer_type : 'radio',
 						answers : [
-							{ name : 'high_school_18', display : 'Still in high school' },
+							{ name : 'high_school_18', display : 'In high school' },
 							{ name : 'undergrad', display : 'In college (undergrad)' },
 							{ name : 'graduate', display : 'In college (graduate)' },
 							{ name : 'single', display : 'Single and not in school' },
@@ -234,7 +231,7 @@
 						answer_type : 'info',
 						answers : [
 							{
-								html : '<h4>You are required to have a parent or guardian read, sign, and mail a completed copy of the <a href="https://docs.google.com/document/d/1s8uqx7hFiYQ1w8OEk47tUn0tG8wwrT9uz0n7hcOkdgA" class="info-link" target="_blank">Grace 2013 Permission Slip</a> to CCLiFe, 670 Bonded Parkway, Streamwood, IL 60107.</h4>'
+								html : $( document.createElement( 'div' ) ).append( gc.template( 'permission_slip' ) ).html()
 							}
 						],
 						depends_on : {
@@ -347,7 +344,7 @@
 		initialize : function() {
 			_.bindAll( this );
 
-			this.paymentModel = new gc.models.payment( this );
+			this.paymentModel = new gc.models.payment( undefined, undefined, this );
 			this.answerCollection = new gc.collections.answer( undefined, undefined, this ); // the confirmed answers
 			this.limboAnswerCollection = new gc.collections.answer( undefined, undefined, this ); // we're not confirming any of these answers yet. going to autofill the inputs even though they're inheriting answers from parents rather than skipping the questions.
 
@@ -427,20 +424,12 @@
 		},
 
 		selectFirstIncompleteAttendee : function() {
-			var firstIncompleteAttendee = this.findWhere( { all_questions_completed : false } ),
-				otherAttendees,
-				i;
+			var firstIncompleteAttendee = this.findWhere( { all_questions_completed : false } );
 
 			if ( !firstIncompleteAttendee ) {
 				return false;
 			}
 
-			otherAttendees = this.without( firstIncompleteAttendee );
-			for ( i = 0; i < otherAttendees.length; i++ ) {
-				otherAttendees[ i ].set( 'selected', false );
-			}
-
-			firstIncompleteAttendee.set( 'selected', true );
 			gc.app.selected.attendee = firstIncompleteAttendee;
 			return firstIncompleteAttendee;
 		},
@@ -477,16 +466,6 @@
 		initialize : function( models, options, attendeeModel ) {
 			_.bindAll( this );
 			this.attendeeModel = attendeeModel;
-		},
-
-		processForm : function() {
-			return $.ajax( '/api/set/attendee_registration/', {
-				data : {
-					value : this.toJSON()
-				},
-				timeout : 10000,
-				type : 'POST'
-			} );
 		}
 	};
 
@@ -541,7 +520,8 @@
 		},
 
 		renderQuestion : function( stache, selectedAttendee ) {
-			var i,
+			var self = this,
+				i,
 				limboAnswer,
 				name;
 
@@ -579,6 +559,12 @@
 			this.$el.empty().
 				append( gc.template( 'question', stache ) ).
 				find( 'input[type="text"], input[type="email"], input[type="tel"]' ).first().focus();
+
+			if ( stache.info ) {
+				setTimeout( function() {
+					self.$el.find( '.info-button' ).fadeIn( 'slow' );
+				}, 3000 );
+			}
 		},
 
 		renderCheckAnswers : function() {
@@ -707,7 +693,7 @@
 					agreement : genericAnswerFunc,
 					info : genericAnswerFunc
 				},
-				selectedAttendee = gc.app.attendeeCollection.findWhere( { selected : true } ),
+				selectedAttendee = gc.app.attendeeCollection.findWhere( { all_questions_completed : false } ),
 				i;
 
 			rawAnswerMap[ answerType ] && ( rawAnswers = rawAnswerMap[ answerType ]() );
@@ -897,48 +883,10 @@
 		},
 
 		processForm : function() {
-			// this.$el.find( '.js-correct' ).empty().append( 'Processing…' ).
-				// prop( 'disabled', true );
-
 			gc.app.selected.attendee.set( 'all_questions_completed', true );
 			this.$el.detach().empty();
 
-			if ( !gc.app.attendeeCollection.findWhere( { all_questions_completed : false } ) ) {
-			}
-
-			// gc.app.answerCollection.processForm().
-			// 	done( this.transitionToPayment ).
-			// 	fail( this.submissionError );
-
 			return false;
-		},
-
-		transitionToPayment : function( response ) {
-			if ( response.status !== 'success' ) {
-				this.submissionError();
-				return;
-			}
-
-			gc.app.localstorage.save( 'form_completed_id', response.id );
-			gc.app.attendee_id = response.id;
-
-			this.$el.detach();
-
-			gc.app.paymentView.render();
-		},
-
-		submissionError : function() {
-			var $error = this.$el.find( '#error-modal' );
-
-			this.$el.find( '.js-correct' ).empty().append( 'Yes, It’s Correct' ).
-				prop( 'disabled', false );
-
-			$error.find( '.btn' ).on( 'click', function() {
-				$error.modal( 'hide' );
-
-				$( this ).off( 'click' );
-			} );
-			$error.modal();
 		},
 
 		generateTemplateVars : function() {
@@ -1022,7 +970,7 @@
 			total_cost : 0
 		},
 
-		initialize : function( attendeeModel ) {
+		initialize : function( attributes, options, attendeeModel ) {
 			_.bindAll( this );
 			this.attendeeModel = attendeeModel;
 
@@ -1164,16 +1112,57 @@
 		},
 
 		proceedWithPayment : function() {
-			var baseUrl = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C',
-				params = [
-					'amount=' + gc.app.paymentModel.attributes.total_cost,
-					'invoice=' + gc.app.attendee_id,
-					'notify_url=http://registration.graceconference.org/api/set/attendee_payment',
-					'return_url=http://registration.graceconference.org/'
-				];
+			var attendeeInfo = [],
+				i;
 
-			window.location.href = baseUrl +'&'+ params.join( '&' );
+			for ( i = 0; i < gc.app.attendeeCollection.length; i++ ) {
+				attendeeInfo.push( {
+					answers : gc.app.attendeeCollection.models[ i ].answerCollection.toJSON(),
+					payment : gc.app.attendeeCollection.models[ i ].paymentModel.toJSON()
+				} );
+			}
+
+			this.$el.addClass( 'payment-processing' );
+
+			// gc.app.answerCollection.processForm().
+			// 	done( this.redirectToPaypal ).
+			// 	fail( this.submissionError );
+
+			$.ajax( '/api/set/attendee_registration/', {
+				data : {
+					value : JSON.stringify( attendeeInfo )
+				},
+				timeout : 10000,
+				type : 'POST'
+			} ).
+			done( this.redirectToPaypal ).
+			fail( this.submissionError );
+
 			return false;
+		},
+
+		redirectToPaypal : function( response ) {
+			if ( response.status !== 'success' ) {
+				this.submissionError();
+				return;
+			}
+
+			gc.app.localstorage.save( 'attendee_ids', response.attendee_ids );
+
+			window.location.href = '/payment';
+		},
+
+		submissionError : function() {
+			var $error = this.$el.find( '#error-modal' );
+
+			this.$el.removeClass( 'payment-processing' );
+
+			$error.find( '.btn' ).on( 'click', function() {
+				$error.modal( 'hide' );
+
+				$( this ).off( 'click' );
+			} );
+			$error.modal();
 		},
 
 		resetForm : function() {

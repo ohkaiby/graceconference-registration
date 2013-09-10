@@ -23,14 +23,4 @@
 		<a class="js-reset-form reset-form-link" href="javascript:void(0);">Start Over For Everyone</a>
 		{{/more_than_one_attendee}}
 	</div>
-
-	<div id="error-modal" class="modal hide fade">
-		<div class="modal-body">
-			<p>There was an error while we were processing your registration.</p>
-			<p>Please try again later.</p>
-		</div>
-		<div class="modal-footer">
-			<a href="javascript:void(0);" class="btn">Close</a>
-		</div>
-	</div>
 </div>

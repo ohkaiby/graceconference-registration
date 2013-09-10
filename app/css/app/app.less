@@ -148,64 +148,6 @@ h3, h4 { font-weight: @buff; }
 	}
 }
 
-#grace-registration-form {
-	line-height: @default-line-height;
-	margin-top: @gutter-size;
-
-	label, input {
-		font-size: @default-font-size;
-		font-family: @sans-serif;
-	}
-
-	legend {
-		margin-top: (@gutter-size * 1.5);
-	}
-
-	.row-fluid {
-		margin-bottom: (@gutter-size);
-	}
-
-	#name {
-		.last-name {
-			float: right;
-		}
-	}
-
-	#address {
-		.address-1 {
-			margin-bottom: (@gutter-size / 3);
-		}
-	}
-
-	#phone {
-		.phone-1 {
-			margin-bottom: (@gutter-size / 3);
-		}
-	}
-
-	#status,
-	#status-18,
-	#kids,
-	#undergraduate,
-	.kids-count,
-	.church-name {
-		display: none;
-	}
-
-	#kids,
-	#church {
-		.first-question {
-			min-height: 65px;
-		}
-	}
-
-	#kids {
-		.kids-no {
-			margin-left: @gutter-size;
-		}
-	}
-}
-
 .btn { margin-right: @gutter-size; }
 
 .agreement {
@@ -248,11 +190,18 @@ h3, h4 { font-weight: @buff; }
 	visibility: visible;
 }
 
-.reset-form-link { color: @subtle-text; margin-right: (@gutter-size * 2); }
+.reset-form-link { color: @subtle-text; line-height: @gutter-size; display: block; }
 
 .meal-cost-container {
 	visibility: hidden;
 	float: right;
+}
+
+.info {
+	&-title { color: red; }
+	&-text { font-size: 18px; margin-bottom: 20px; }
+	&-button-wrapper { height: 45px; }
+	&-button { display: none; }
 }
 
 .payment {
@@ -266,11 +215,16 @@ h3, h4 { font-weight: @buff; }
 	&-total-row &-cost-major { font-weight: bold; }
 
 	&-button-wrapper { text-align: right !important; padding-top: 30px !important; }
+
+	&-processing-text { display: none; }
 	&-paypal-pay {
 		display: inline-block;
 		width: 109px; height: 28px;
 		background: url("/app/img/paypal_button.gif") no-repeat scroll left top;
 	}
+	&-processing &-paypal-pay { display: none; }
+	&-processing &-processing-text { display: inline-block; }
+
 	&-extras-container {
 		visibility: visible;
 	}

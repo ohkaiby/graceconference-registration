@@ -31,9 +31,16 @@
 		tester = undefined;
 
 	<?php
-	if ( !empty( $SESSION) ) {
-		foreach( $SESSION as $key => $value ) {
-			echo 'gc.session.'. $key .' = \''. $value ."';\r\n\t";
+	if ( !empty( $SESSION[ 'number_of_attendees' ] ) ) {
+		echo "gc.session.number_of_attendees = ". $SESSION[ 'number_of_attendees' ] .";\r\n\t";
+	}
+
+	if ( !empty( $SESSION[ 'attendees' ] ) ) {
+		foreach ( $SESSION[ 'attendees' ] as $i => $attendee ) {
+			echo "gc.session[ 'attendee_$i.all_questions_completed' ] = true;\r\n\t";
+			foreach ( $attendee[ 'answers' ] as $fieldValues ) {
+				echo "gc.session[ 'attendee_$i.". $fieldValues[ 'field' ] ."' ] = '". htmlspecialchars_decode( $fieldValues[ 'value' ] ) ."';\r\n\t";
+			}
 		}
 	}
 	?>
