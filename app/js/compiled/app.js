@@ -5,7 +5,7 @@
 
 	t.init = {
 		initialize : function() {
-			var attendeeId;
+			var attendeeIds;
 
 			_.bindAll( t.init );
 
@@ -35,8 +35,12 @@
 			this.fillQuestions();
 			this.fillSavedAttendeeAnswers();
 
-			if ( attendeeId = ( gc.app.attendee_id || gc.app.localstorage.load( 'attendee_id' ) ) ) {
-				$.get( '/api/get/check_payment_made', { attendee_id : attendeeId } ).done( function( response ) {
+			if ( attendeeIds = gc.app.localstorage.load( 'attendee_ids' ) ) {
+				if ( _.isString( attendeeIds ) ) {
+					attendeeIds = attendeeIds.split( ',' );
+				}
+
+				$.get( '/api/get/check_payment_made', { attendee_id : attendeeIds[ 0 ] } ).done( function( response ) {
 					if ( response.paid ) {
 						gc.app.completionView.render();
 					} else {

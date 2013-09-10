@@ -85,9 +85,9 @@ class Attendees {
 
 		$base_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C';
 		$params = array(
-			'amount' => $this->getTotalCostOfAttendees( $f3->get( 'SESSION.attendees' ) ),
-			'invoice' => base64_encode( serialize( $f3->get( 'SESSION.attendee_ids' ) ) ),
-			// 'notify_url' => 'http://registration.graceconference.org/api/set/attendee_payment',
+			// 'amount' => $this->getTotalCostOfAttendees( $f3->get( 'SESSION.attendees' ) ),
+			'amount' => .01,
+			'invoice' => base64_encode( serialize( $f3->get( 'SESSION.attendee_ids' ) ) )
 			// 'return_url' => 'http://registration.graceconference.org/'
 		);
 
@@ -110,5 +110,39 @@ class Attendees {
 		}
 
 		return $total_cost;
+	}
+
+	public function updateAttendeesWithPayment( $invoice, $amount ) {
+		$attendee_ids = unserialize( base64_decode( $invoice ) );
+		$attendee_ids_sql_str = implode( ', ', $attendee_ids );
+
+		return $this->db->exec( 'UPDATE attendees SET paid=?, payment_date=?, amount_paid=?, paypal_invoice=? WHERE id IN (?);',
+			array(
+				1 => 1,
+				2 => date( 'Y-m-d H:i:s' ),
+				3 => $amount,
+				4 => $invoice,
+				5 => $attendee_ids_sql_str
+			)
+		);
+	}
+
+	public function logPaypalTransaction() {
+		global $f3;
+
+		$logPost = var_export( $f3->get( 'POST' ), true );
+		$logGet = var_export( $f3->get( 'GET' ), true );
+		$logSession = var_export( $f3->get( 'SESSION' ), true );
+		$logServer = var_export( $f3->get( 'SERVER' ), true );
+
+		return $this->db->exec(
+			'INSERT INTO paypal_post_log (post, session, get, server) VALUES (?, ?, ?, ?);',
+			array(
+				1 => $logPost,
+				2 => $logSession,
+				3 => $logGet,
+				4 => $logServer
+			)
+		);
 	}
 }

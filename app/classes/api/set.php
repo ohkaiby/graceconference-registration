@@ -36,42 +36,23 @@ class Set {
 	}
 
 	private function attendeePayment( $post ) { // this is the paypal callback
-		global $f3, $Email;
+		$Attendees = new \Helpers\Attendees;
 
-		$logPost = var_export( $post, true );
-		$logGet = var_export( $f3->get( 'GET' ), true );
-		$logSession = var_export( $f3->get( 'SESSION' ), true );
-		$logServer = var_export( $f3->get( 'SERVER' ), true );
+		$this->db->begin();
 
-		$this->db->exec(
-			'INSERT INTO paypal_post_log (post, session, get, server) VALUES (?, ?, ?, ?);',
-			array(
-				1 => $logPost,
-				2 => $logSession,
-				3 => $logGet,
-				4 => $logServer
-			)
-		);
+		$Attendees->logPaypalTransaction();
+		$result = $Attendees->updateAttendeesWithPayment( $post[ 'invoice' ], $post[ 'mc_gross' ] );
 
-		// $amount = $post[ 'mc_gross' ];
-		// $id = $post[ 'invoice' ];
+		$this->db->commit();
 
-		// $result = $this->db->exec( 'UPDATE attendees SET paid=?, amount_paid=?, payment_date=? WHERE id=?;',
-		// 	array(
-		// 		1 => 1,
-		// 		2 => $amount,
-		// 		3 => date( 'Y-m-d H:i:s' ),
-		// 		4 => $id
-		// 	)
-		// );
+		if ( $result === 1 ) {
+			$Email = new \Helpers\Email;
+			$Email->sendRegistrationConfirmation( $post[ 'invoice' ] );
 
-		// if ( $result === 1 ) {
-		// 	$Email->sendRegistrationConfirmation( $id );
-
-		// 	return $this->formatDataToJSON( array( 'status' => 'success' ) );
-		// } else {
-		// 	return $this->formatDataToJSON( array( 'status' => 'error' ) );
-		// }
+			return $this->formatDataToJSON( array( 'status' => 'success' ) );
+		} else {
+			return $this->formatDataToJSON( array( 'status' => 'error' ) );
+		}
 	}
 
 	private function resetRegistration() {

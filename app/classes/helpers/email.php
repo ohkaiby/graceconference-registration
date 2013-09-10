@@ -3,22 +3,36 @@
 namespace Helpers;
 
 class Email {
-	public function sendRegistrationConfirmation( $attendee_id ) {
+	public function sendRegistrationConfirmation( $invoice ) {
 		global $f3;
 
-		$result = $f3->get( 'db' )->exec( 'SELECT * FROM attendees WHERE id = ?;', $attendee_id );
+		$result = $f3->get( 'db' )->exec( 'SELECT * FROM attendees WHERE paypal_invoice = ?;', $invoice );
 
 		if ( empty( $result ) ) { return; }
 
-		$fields = $result[ 0 ];
+		$email_params = array();
+		$email_addresses = array();
 
-		$html = 'Dear '. $fields[ 'first_name' ] .',';
-		$html .= '<p>This email is to confirm your registration for Grace Conference 2013. The total amount paid is $'. $fields[ 'amount_paid' ] .'.</p>';
-		$html .= '<p>Note that this does not cover your stay at the Pheasant Run Resort. You&apos;ll need to register with PRR or a nearby hotel separately. Hotel registration discounts can be found at <a href="https://reservations.ihotelier.com/crs/g_reservation.cfm?groupID=794195&hotelID=2932">Pheasant Run at iHotelier</a>, <a href="http://www.ihg.com/holidayinnexpress/hotels/us/en/st.-charles/chisc/hoteldetail?groupCode=CCL">Holiday Inn Express</a>, and the <a href="http://cwp.marriott.com/chisc/gospelforchina/">Courtyard Mariott</a>.</p>';
-		$html .= '<p>We look forward to seeing you!</p>';
-		$html .= '<br>Grace Conference 2013';
+		foreach ( $result as $attendee ) {
+			if ( !in_array( $attendee[ 'email' ], $email_addresses ) ) {
+				array_push( $email_addresses, $attendee[ 'email' ] );
+				array_push( $email_params, array(
+					'first_name' => $attendee[ 'first_name' ],
+					'amount_paid' => round( floatval( $attendee[ 'amount_paid' ] ), 2 ),
+					'email' => $attendee[ 'email' ]
+				) );
+			}
+		}
 
-		$this->send( $fields[ 'email' ], 'Grace 2013 Registration Confirmation', $html );
+		foreach( $email_params as $email ) {
+			$html = 'Dear '. $email[ 'first_name' ] .',';
+			$html .= '<p>This email is to confirm your registration for Grace Conference 2013. The total amount paid is $'. $email[ 'amount_paid' ] .'.</p>';
+			$html .= '<p>Note that this does not cover your stay at the Pheasant Run Resort. You&apos;ll need to register with PRR or a nearby hotel separately. Hotel registration discounts can be found at <a href="https://reservations.ihotelier.com/crs/g_reservation.cfm?groupID=794195&hotelID=2932">Pheasant Run at iHotelier</a>, <a href="http://www.ihg.com/holidayinnexpress/hotels/us/en/st.-charles/chisc/hoteldetail?groupCode=CCL">Holiday Inn Express</a>, and the <a href="http://cwp.marriott.com/chisc/gospelforchina/">Courtyard Mariott</a>.</p>';
+			$html .= '<p>We look forward to seeing you!</p>';
+			$html .= '<br>Grace Conference 2013';
+
+			$this->send( $email[ 'email' ], 'Grace 2013 Registration Confirmation', $html );
+		}
 	}
 
 	public function send( $email, $subject, $html ) {
