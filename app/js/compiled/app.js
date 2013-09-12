@@ -1140,7 +1140,7 @@
 
 			$.ajax( '/api/set/attendee_registration/', {
 				data : {
-					value : JSON.stringify( attendeeInfo )
+					value : attendeeInfo
 				},
 				timeout : 10000,
 				type : 'POST'

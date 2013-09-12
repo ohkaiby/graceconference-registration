@@ -26,7 +26,7 @@ class Set {
 		global $f3;
 
 		$Attendees = new \Helpers\Attendees;
-		return $this->formatDataToJSON( $Attendees->registerAttendees( json_decode( $post[ 'value' ], true ) ) );
+		return $this->formatDataToJSON( $Attendees->registerAttendees( $post[ 'value' ] ) );
 	}
 
 	private function attendeePayment( $post ) { // this is the paypal callback
