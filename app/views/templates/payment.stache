@@ -60,6 +60,12 @@
 				<span class="payment-processing-text">Processing…</span>
 			</td>
 		</tr>
+
+		<tr>
+			<td colspan="2" class="payment-disclaimer">
+				Note that payment for registrations for Grace Conference are non-refundable.
+			</td>
+		</tr>
 	</tbody>
 </table>
 <div class="extras-container payment-extras-container">

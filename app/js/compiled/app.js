@@ -95,15 +95,25 @@
 					},
 
 					{
+						question_name : 'exact_age',
+						question : 'What is your EXACT age?',
+						display : 'Exact Age',
+						answer_type : 'text',
+						answers : [
+							{ name : 'exact_age', display : 'Exact Age' }
+						],
+						depends_on : {
+							question_name : 'age',
+							answer_names : [ '11' ]
+						}
+					},
+
+					{
 						question_name : 'grade',
 						question : 'What grade are you in?',
 						display : 'What grade',
 						answer_type : 'radio',
 						answers : [
-							{ name : '1st', display : '1st grade' },
-							{ name : '2nd', display : '2nd grade' },
-							{ name : '3rd', display : '3rd grade' },
-							{ name : '4th', display : '4th grade' },
 							{ name : '5th', display : '5th grade' },
 							{ name : '6th', display : '6th grade' },
 							{ name : '7th', display : '7th grade' },
@@ -115,7 +125,7 @@
 						],
 						depends_on : {
 							question_name : 'age',
-							answer_names : [ '11', '12_17' ]
+							answer_names : [ '12_17' ]
 						}
 					},
 
@@ -567,7 +577,7 @@
 			if ( stache.info ) {
 				setTimeout( function() {
 					self.$el.find( '.info-button' ).fadeIn( 'slow' );
-				}, 3000 );
+				}, 5000 );
 			}
 		},
 
