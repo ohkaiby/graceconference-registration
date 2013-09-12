@@ -53,9 +53,9 @@ class Get {
 
 	private function checkPaymentMade() {
 		global $f3;
-		$id = $f3->get( 'GET.attendee_id' );
+		$invoice = $f3->get( 'GET.invoice' );
 
-		$results = $this->db->exec( 'SELECT paid FROM attendees WHERE id = ?', $id );
+		$results = $this->db->exec( 'SELECT paid FROM attendees WHERE paypal_invoice = ?', $invoice );
 
 		return $this->formatDataToJSON( array( 'paid' => !empty( $results ) && $results[ 0 ][ 'paid' ] ) );
 	}

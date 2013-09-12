@@ -1,6 +1,6 @@
 <?php
-// setup
 
+// setup
 $f3 = require( 'app/f3/lib/base.php' );
 $config = require( 'config.php' );
 $f3->mset( array(
@@ -22,10 +22,8 @@ $f3->mset( array(
 $f3->set( 'AUTOLOAD', 'app/classes/' );
 $Get = new API\Get;
 $Set = new API\Set;
-$Cache = new Helpers\Cache;
 
 // api stuff
-
 $f3->route( 'POST /api/set/@key', function( $f3, $params ) {
 	global $Set;
 
@@ -45,11 +43,6 @@ $f3->route( 'GET /api/get/@key [ajax]', function( $f3, $params ) {
 // views
 $f3->route( 'GET /', function( $f3 ) {
 	echo View::instance()->render( 'form.html' );
-} );
-
-$f3->route( 'GET /payment', function( $f3 ) {
-	$Attendees = new Helpers\Attendees;
-	$Attendees->redirectToPaypal();
 } );
 
 // init

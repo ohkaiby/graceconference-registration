@@ -17,6 +17,15 @@ class Attendees {
 		$ids_affected = array();
 		$errors_happened = false;
 
+		$attendee_ids = $f3->get( 'SESSION.attendee_ids' );
+		if ( !empty( $attendee_ids ) ) {
+			$payment_invoice = $this->getPaymentInvoice( $attendee_ids );
+			$payment_url = $this->getPaymentUrl( $payment_invoice );
+
+			return array( 'status' => 'success', 'attendee_ids' => $attendee_ids, 'payment_url' => $payment_url, 'invoice' => $payment_invoice );
+		}
+
+		// everything after this point is if this is the user's first time of attempting to submitting payment
 		$f3->set( 'SESSION.number_of_attendees', count( $attendees ) );
 		$f3->set( 'SESSION.attendees', $attendees );
 
@@ -53,42 +62,64 @@ class Attendees {
 				$errors_happened = true;
 			}
 		}
+
+		if ( !$errors_happened ) {
+			$payment_invoice = $this->getPaymentInvoice( $ids_affected );
+			$payment_url = $this->getPaymentUrl( $payment_invoice );
+
+			$f3->set( 'SESSION.attendee_ids', $ids_affected );
+			$f3->set( 'SESSION.invoice', $payment_invoice );
+
+			foreach ( $ids_affected as $id ) { // why the "IN" clause doesn't work, I don't know.
+				$this->db->exec( 'UPDATE attendees set paypal_invoice = ? WHERE id = ?;',
+					array(
+						1 => $payment_invoice,
+						2 => $id
+					)
+				);
+			}
+		}
+
 		$this->db->commit();
 
 		if ( !$errors_happened ) {
-			$f3->set( 'SESSION.attendee_ids', $ids_affected );
-			return $ids_affected;
+			return array( 'status' => 'success', 'attendee_ids' => $ids_affected, 'payment_url' => $payment_url, 'invoice' => $payment_invoice );
 		} else {
-			return false;
+			return array( 'status' => 'error', 'error' => $this->db->errorInfo() );
 		}
 	}
 
 	private function prepareAttendeeFieldsForInsertion( $attendee ) {
 		$final_values = array();
+		$default_null_fields = array( 'exact_age', 'grade', 'status', 'undergrad_year' );
 
 		// answers
 		foreach( $attendee[ 'answers' ] as $fieldValues ) {
 			$final_values[ $fieldValues[ 'field' ] ] = $fieldValues[ 'value' ];
 		}
 
-		empty( $final_values[ 'grade' ] ) && ( $final_values[ 'grade' ] = null );
-		empty( $final_values[ 'status' ] ) && ( $final_values[ 'status' ] = null );
-		empty( $final_values[ 'undergrad_year' ] ) && ( $final_values[ 'undergrad_year' ] = null );
-		$final_values[ 'phone_is_mobile' ] = ( $final_values[ 'phone_is_mobile' ] === 'yes' ) ? 1 : 0;
+		foreach( $default_null_fields as $field ) {
+			empty( $final_values[ $field ] ) && ( $final_values[ $field ] = null );
+		}
 
+		$final_values[ 'phone_is_mobile' ] = ( $final_values[ 'phone_is_mobile' ] === 'yes' ) ? 1 : 0;
 		$final_values[ 'calculated_payment' ] = $attendee[ 'payment' ][ 'total_cost' ];
 
 		return $final_values;
 	}
 
-	public function redirectToPaypal() {
+	private function getPaymentInvoice( $attendee_ids ) {
+		return base64_encode( serialize( $attendee_ids ) );
+	}
+
+	private function getPaymentUrl( $invoice ) {
 		global $f3;
 
 		$base_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C';
 		$params = array(
 			// 'amount' => $this->getTotalCostOfAttendees( $f3->get( 'SESSION.attendees' ) ),
 			'amount' => .01,
-			'invoice' => base64_encode( serialize( $f3->get( 'SESSION.attendee_ids' ) ) )
+			'invoice' => $invoice
 			// 'return_url' => 'http://registration.graceconference.org/'
 		);
 
@@ -98,9 +129,7 @@ class Attendees {
 		}
 
 		$final_url = $base_url .'&'. implode( '&', $encoded_params );
-
-		header( 'Location: ' . $final_url );
-		exit;
+		return $final_url;
 	}
 
 	private function getTotalCostOfAttendees( $attendees ) {
@@ -117,13 +146,12 @@ class Attendees {
 		$attendee_ids = unserialize( base64_decode( $invoice ) );
 		$attendee_ids_sql_str = implode( ', ', $attendee_ids );
 
-		return $this->db->exec( 'UPDATE attendees SET paid=?, payment_date=?, amount_paid=?, paypal_invoice=? WHERE id IN (?);',
+		return $this->db->exec( 'UPDATE attendees SET paid=?, payment_date=?, amount_paid=? WHERE paypal_invoice = ?;',
 			array(
 				1 => 1,
 				2 => date( 'Y-m-d H:i:s' ),
 				3 => $amount,
-				4 => $invoice,
-				5 => $attendee_ids_sql_str
+				4 => $invoice
 			)
 		);
 	}

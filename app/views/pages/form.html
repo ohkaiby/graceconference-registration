@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-	<title>Grace Conference 2013 Registration Form [IN PROGRESS]</title>
+	<title>Grace Conference 2013 Registration</title>
 	<link href="//fonts.googleapis.com/css?family=Lato:300,400,700|Alex+Brush" rel="stylesheet" type="text/css">
 	<link href="/app/css/app.min.css" rel="stylesheet" type="text/css">
 </head>
@@ -33,6 +33,9 @@
 	<?php
 	if ( !empty( $SESSION[ 'number_of_attendees' ] ) ) {
 		echo "gc.session.number_of_attendees = ". $SESSION[ 'number_of_attendees' ] .";\r\n\t";
+	}
+	if ( !empty( $SESSION[ 'invoice' ] ) ) {
+		echo "gc.session.invoice = '". $SESSION[ 'invoice' ] ."';\r\n\t";
 	}
 
 	if ( !empty( $SESSION[ 'attendee_ids' ] ) ) {

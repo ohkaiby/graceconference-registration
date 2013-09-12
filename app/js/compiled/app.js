@@ -5,7 +5,7 @@
 
 	t.init = {
 		initialize : function() {
-			var attendeeIds;
+			var invoice;
 
 			_.bindAll( t.init );
 
@@ -25,6 +25,9 @@
 			gc.models.payment = Backbone.Model.extend( t.paymentModelCore );
 			gc.app.paymentView = new ( Backbone.View.extend( t.paymentViewCore ) )();
 
+			gc.models.paymentProcessing = Backbone.Model.extend( t.paymentProcessingModelCore );
+			gc.app.paymentProcessingModel = new gc.models.paymentProcessing();
+
 			gc.app.completionView = new ( Backbone.View.extend( t.completionViewCore ) )();
 
 			gc.app.localstorage = new t.localStorageController();
@@ -35,12 +38,8 @@
 			this.fillQuestions();
 			this.fillSavedAttendeeAnswers();
 
-			if ( attendeeIds = gc.app.localstorage.load( 'attendee_ids' ) ) {
-				if ( _.isString( attendeeIds ) ) {
-					attendeeIds = attendeeIds.split( ',' );
-				}
-
-				$.get( '/api/get/check_payment_made', { attendee_id : attendeeIds[ 0 ] } ).done( function( response ) {
+			if ( invoice = gc.app.localstorage.load( 'invoice' ) ) {
+				$.get( '/api/get/check_payment_made', { invoice : invoice } ).done( function( response ) {
 					if ( response.paid ) {
 						gc.app.completionView.render();
 					} else {
@@ -330,6 +329,7 @@
 
 			return $.post( '/api/set/reset_registration' ).done( function() {
 				gc.app.session = {};
+				gc.app.paymentProcessingModel.stopPolling();
 				gc.app.attendeeCollection.reset();
 			} );
 		}
@@ -1138,10 +1138,6 @@
 
 			this.$el.addClass( 'payment-processing' );
 
-			// gc.app.answerCollection.processForm().
-			// 	done( this.redirectToPaypal ).
-			// 	fail( this.submissionError );
-
 			$.ajax( '/api/set/attendee_registration/', {
 				data : {
 					value : JSON.stringify( attendeeInfo )
@@ -1149,21 +1145,24 @@
 				timeout : 10000,
 				type : 'POST'
 			} ).
-			done( this.redirectToPaypal ).
+			done( this.openPayment ).
 			fail( this.submissionError );
+
+			gc.app.paymentProcessingModel.paymentWindow = window.open();
 
 			return false;
 		},
 
-		redirectToPaypal : function( response ) {
+		openPayment : function( response ) {
 			if ( response.status !== 'success' ) {
 				this.submissionError();
 				return;
 			}
 
 			gc.app.localstorage.save( 'attendee_ids', response.attendee_ids );
+			gc.app.localstorage.save( 'invoice', response.invoice );
 
-			window.location.href = '/payment';
+			gc.app.paymentProcessingModel.initPaymentProcessing( response.payment_url, response.invoice );
 		},
 
 		submissionError : function() {
@@ -1190,6 +1189,49 @@
 		}
 	};
 
+	t.paymentProcessingModelCore = {
+		paymentWindow : null,
+		polling : null,
+
+		initialize : function() {
+			_.bindAll( this );
+		},
+
+		initPaymentProcessing : function( url, invoice ) {
+			this.paymentWindow.location.href = url;
+
+			this.polling = setInterval( this.ajaxPoll( invoice ) , 5000 );
+		},
+
+		finishPaymentProcessing : function( response ) {
+			if ( response.paid ) {
+				this.stopPolling();
+				gc.app.completionView.render();
+			} else {
+				gc.app.formView.render();
+			}
+		},
+
+		ajaxPoll : function( invoice ) {
+			var self = this;
+
+			return function() {
+				return $.get(
+					'/api/get/check_payment_made',
+					{ invoice : invoice }
+				).
+				done( self.finishPaymentProcessing );
+			};
+		},
+
+		stopPolling : function() {
+			if ( this.polling ) {
+				clearInterval( this.polling );
+				this.polling = null;
+			}
+		}
+	};
+
 	t.completionViewCore = {
 		events : {
 			'click .js-restart-form' : 'resetForm'
@@ -1203,7 +1245,7 @@
 			this.$el.empty().append( gc.template( 'completion', {} ) );
 
 			if ( this.$el.parent().length === 0 ) {
-				this.$el.appendTo( '#view-container' );
+				$( '#view-container' ).empty().append( this.el );
 			}
 		},
 
