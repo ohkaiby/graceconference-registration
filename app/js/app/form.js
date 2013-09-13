@@ -145,7 +145,7 @@
 							{ name : 'high_school_18', display : 'In high school' },
 							{ name : 'undergrad', display : 'In college (undergrad)' },
 							{ name : 'graduate', display : 'In college (graduate)' },
-							{ name : 'single', display : 'Single and not in school' },
+							{ name : 'single', display : 'Single' },
 							{ name : 'married', display : 'Married' }
 						],
 						depends_on : {
