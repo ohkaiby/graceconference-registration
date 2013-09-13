@@ -12,6 +12,7 @@ $config[ 'db_pass' ] = 'your_db_user_password';
 // environment
 $config[ 'environment' ] = 'development'; // development, test, stage, production
 $config[ 'base_path' ] = '';
+$config[ 'payment_url' ] = '';
 
 if ( in_array( $config[ 'environment' ], array( 'stage', 'production' ) ) ) {
 	$config[ 'debug' ] = 0;

@@ -35,14 +35,16 @@ h3, h4 { font-weight: @buff; }
 	vertical-align: baseline;
 }
 
+.logo-container { text-align: center; }
 .logo {
-	margin: @gutter-size 10px 0 0;
-	width: 109px;
-	height: 100px;
+	margin: @gutter-size 0 0 0;
+	width: 498px;
+	height: 250px;
+	max-width: 100%;
 
 	.hide-text();
 
-	background: url("/app/img/logo_placeholder.png") no-repeat scroll left top;
+	background: url("/app/img/logo-registration.png") no-repeat scroll left top;
 	background-size: contain;
 }
 
@@ -82,15 +84,21 @@ h3, h4 { font-weight: @buff; }
 	.alert {
 		display: none;
 	}
-
-	.btn {
-		.box-sizing();
-		width: 150px
-	}
 }
 
+.btn {
+	.box-sizing();
+	width: 150px;
+	background: @logo-text-color;
+	color: @brightest;
+	text-shadow: none;
+}
+.btn-large { width: 250px; }
+.btn:hover { background: lighten(@logo-text-color, 3%); color: @brightest; }
+.btn:active { background: darken(@logo-text-color, 3%); }
+.btn:focus { background: @logo-text-color; color: @brightest; }
+
 .question-title {
-	padding-top: @gutter-size;
 	margin-bottom: 0;
 
 	font-family: 'Georgia', serif;
@@ -191,6 +199,7 @@ h3, h4 { font-weight: @buff; }
 }
 
 .reset-form-link { color: @subtle-text; line-height: @gutter-size; display: block; }
+.reset-form-link:hover { color: @logo-text-color; }
 
 .meal-cost-container {
 	visibility: hidden;

@@ -34,25 +34,26 @@ class Attendees {
 			$attendee_sql_fields = $this->prepareAttendeeFieldsForInsertion( $attendee );
 
 			$result = $this->db->exec( 'INSERT INTO attendees
-				(first_name, last_name, email, age, exact_age, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, ip_address, calculated_payment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+				(first_name, last_name, email, age, exact_age, gender, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, ip_address, calculated_payment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
 				array(
 					1 => $attendee_sql_fields[ 'first_name' ],
 					2 => $attendee_sql_fields[ 'last_name' ],
 					3 => $attendee_sql_fields[ 'email' ],
 					4 => $attendee_sql_fields[ 'age' ],
 					5 => $attendee_sql_fields[ 'exact_age' ],
-					6 => $attendee_sql_fields[ 'grade' ],
-					7 => $attendee_sql_fields[ 'status' ],
-					8 => $attendee_sql_fields[ 'undergrad_year' ],
-					9 => $attendee_sql_fields[ 'phone' ],
-					10 => $attendee_sql_fields[ 'phone_is_mobile' ],
-					11 => $attendee_sql_fields[ 'address' ],
-					12 => $attendee_sql_fields[ 'city' ],
-					13 => $attendee_sql_fields[ 'state' ],
-					14 => $attendee_sql_fields[ 'zip' ],
-					15 => $attendee_sql_fields[ 'meal_plan' ],
-					16 => $f3->get( 'IP' ),
-					17 => $attendee_sql_fields[ 'calculated_payment' ]
+					6 => $attendee_sql_fields[ 'gender' ],
+					7 => $attendee_sql_fields[ 'grade' ],
+					8 => $attendee_sql_fields[ 'status' ],
+					9 => $attendee_sql_fields[ 'undergrad_year' ],
+					10 => $attendee_sql_fields[ 'phone' ],
+					11 => $attendee_sql_fields[ 'phone_is_mobile' ],
+					12 => $attendee_sql_fields[ 'address' ],
+					13 => $attendee_sql_fields[ 'city' ],
+					14 => $attendee_sql_fields[ 'state' ],
+					15 => $attendee_sql_fields[ 'zip' ],
+					16 => $attendee_sql_fields[ 'meal_plan' ],
+					17 => $f3->get( 'IP' ),
+					18 => $attendee_sql_fields[ 'calculated_payment' ]
 				)
 			);
 
@@ -114,11 +115,12 @@ class Attendees {
 
 	private function getPaymentUrl( $invoice ) {
 		global $f3;
+		$config = $f3->get( 'config' );
 
-		$base_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MNUGKS74MHQ6C';
+		$base_url = $config[ 'payment_url' ];
 		$params = array(
-			// 'amount' => $this->getTotalCostOfAttendees( $f3->get( 'SESSION.attendees' ) ),
-			'amount' => .01,
+			'amount' => $this->getTotalCostOfAttendees( $f3->get( 'SESSION.attendees' ) ),
+			// 'amount' => .01,
 			'invoice' => $invoice
 			// 'return_url' => 'http://registration.graceconference.org/'
 		);

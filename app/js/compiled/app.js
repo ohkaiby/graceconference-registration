@@ -35,6 +35,8 @@
 			gc.app.selected = {};
 			gc.app.resetForm = this.resetForm;
 
+			gc.app.$view = $( '#view-container' );
+
 			this.fillQuestions();
 			this.fillSavedAttendeeAnswers();
 
@@ -73,15 +75,6 @@
 					},
 
 					{
-						question_name : 'email',
-						question : 'What is your email?',
-						answer_type : 'email',
-						answers : [
-							{ name : 'email', display : 'Email' }
-						]
-					},
-
-					{
 						question_name : 'age',
 						question : 'How old are you?',
 						display : 'Age',
@@ -108,6 +101,17 @@
 					},
 
 					{
+						question_name : 'gender',
+						question : 'You are…',
+						display : 'Gender',
+						answer_type : 'radio',
+						answers : [
+							{ name : 'male', display : 'Male' },
+							{ name : 'female', display : 'Female' }
+						]
+					},
+
+					{
 						question_name : 'grade',
 						question : 'What grade are you in?',
 						display : 'What grade',
@@ -120,7 +124,11 @@
 							{ name : 'freshmen', display : 'Freshmen' },
 							{ name : 'sophomore', display : 'Sophomore' },
 							{ name : 'junior', display : 'Junior' },
-							{ name : 'senior', display : 'Senior' }
+							{ name : 'senior', display : 'Senior' },
+							{ name : 'freshmen_undergrad', display : 'Freshmen (College)' },
+							{ name : 'sophomore_undergrad', display : 'Sophomore (College)' },
+							{ name : 'junior_undergrad', display : 'Junior (College)' },
+							{ name : 'senior_undergrad', display : 'Senior (College)' }
 						],
 						depends_on : {
 							question_name : 'age',
@@ -162,6 +170,15 @@
 							question_name : 'status',
 							answer_names : [ 'undergrad' ]
 						}
+					},
+
+					{
+						question_name : 'email',
+						question : 'What is your email?',
+						answer_type : 'email',
+						answers : [
+							{ name : 'email', display : 'Email' }
+						]
 					},
 
 					{
@@ -325,13 +342,19 @@
 		},
 
 		resetForm : function() {
-			gc.app.localstorage.clear();
+			var resetAjax = $.post( '/api/set/reset_registration' );
+			gc.app.$view.fadeOut( 'slow', function() {
+				gc.app.$view.empty();
+				gc.app.localstorage.clear();
 
-			return $.post( '/api/set/reset_registration' ).done( function() {
-				gc.app.session = {};
-				gc.app.paymentProcessingModel.stopPolling();
-				gc.app.attendeeCollection.reset();
+				resetAjax.done( function() {
+					gc.app.session = {};
+					gc.app.paymentProcessingModel.stopPolling();
+					gc.app.attendeeCollection.reset();
+				} );
 			} );
+
+			return resetAjax;
 		}
 	};
 
@@ -526,10 +549,6 @@
 				this.renderCheckAnswers();
 			} else {
 				this.renderQuestion( questionModel.toJSON(), selectedAttendee );
-
-				if ( selectedAttendee && selectedAttendee.answerCollection.length > 0 ) {
-					this.$el.find( '.extras-container' ).css( 'visibility', 'visible' );
-				}
 			}
 		},
 
@@ -570,21 +589,33 @@
 				}
 			}
 
-			this.$el.empty().
-				append( gc.template( 'question', stache ) ).
-				find( 'input[type="text"], input[type="email"], input[type="tel"]' ).first().focus();
+			gc.app.$view.fadeOut( 'fast', function() {
+				self.$el.empty().
+					append( gc.template( 'question', stache ) ).
+					find( 'input[type="text"], input[type="email"], input[type="tel"]' ).first().focus();
 
-			if ( stache.info ) {
-				setTimeout( function() {
-					self.$el.find( '.info-button' ).fadeIn( 'slow' );
-				}, 5000 );
-			}
+				gc.app.$view.fadeIn( 'fast', function() {
+					if ( stache.info ) {
+						setTimeout( function() {
+							self.$el.find( '.info-button' ).fadeIn( 'slow' );
+						}, 5000 );
+					}
+
+					if ( selectedAttendee && selectedAttendee.answerCollection.length > 0 ) {
+						self.$el.find( '.extras-container' ).css( 'visibility', 'visible' );
+					}
+				} );
+			} );
 		},
 
 		renderCheckAnswers : function() {
 			this.$el.detach();
 
-			gc.app.reviewView.render();
+			gc.app.$view.fadeOut( 'fast', function() {
+				gc.app.reviewView.render();
+
+				gc.app.$view.fadeIn( 'fast' );
+			} );
 		},
 
 		processAnswer : function() {
@@ -871,7 +902,12 @@
 
 		render : function() {
 			if ( !gc.app.attendeeCollection.findWhere( { all_questions_completed : false } ) ) {
-				gc.app.paymentView.render();
+				gc.app.$view.fadeOut( 'fast', function() {
+					gc.app.paymentView.render();
+
+					gc.app.$view.fadeIn( 'fast' );
+				} );
+
 				return;
 			}
 
@@ -1207,9 +1243,9 @@
 			if ( response.paid ) {
 				this.stopPolling();
 				gc.app.completionView.render();
-			} else {
+			} /*else {
 				gc.app.formView.render();
-			}
+			}*/
 		},
 
 		ajaxPoll : function( invoice ) {

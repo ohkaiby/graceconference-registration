@@ -133,7 +133,7 @@ module.exports = function( grunt ) {
 			},
 			js_app : {
 				files : [ '<%= jshint.app.src %>' ],
-				tasks : [ 'jshint:app', 'concat:js_app'/*, 'uglify:js_app'*/ ]
+				tasks : [ 'jshint:app', 'concat:js_app', 'uglify:js_app' ]
 			},
 			css : {
 				files : [ 'app/css/app/*.less' ],
@@ -158,5 +158,5 @@ module.exports = function( grunt ) {
 	// grunt.registerMultiTask( 'hoganize_templates', 'Compiles raw templates to hogan.js.', hoganizeTask );
 
 	// Default task.
-	grunt.registerTask('default', ['jshint', 'less', /*'qunit',*/ 'concat', /*'uglify',*/ 'hogan']);
+	grunt.registerTask('default', ['jshint', 'less', /*'qunit',*/ 'concat', 'uglify', 'hogan']);
 };

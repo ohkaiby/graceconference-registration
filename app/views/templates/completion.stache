@@ -1,8 +1,6 @@
 <h3 class="completion-title">Registration Complete</h3>
 <p class="completion-text">You’ve finished the registration process! We also sent you an email confirmation.</p>
+<p class="completion-text">Note that this does not cover your stay at the Pheasant Run Resort. You'll need to register with PRR or a nearby hotel separately. Hotel registration discounts can be found at <a target="_blank" href="https://reservations.ihotelier.com/crs/g_reservation.cfm?groupID=794195&amp;hotelID=2932">Pheasant Run at iHotelier</a>, <a target="_blank" href="http://www.ihg.com/holidayinnexpress/hotels/us/en/st.-charles/chisc/hoteldetail?groupCode=CCL">Holiday Inn Express</a>, and the <a target="_blank" href="http://cwp.marriott.com/chisc/gospelforchina/">Courtyard Mariott</a>.</p>
 
-{{#hasChildren}}
-<p class="completion-text">You’ll need to register your children as well.</p>
-{{/hasChildren}}
 <br><br>
 <button class="js-restart-form btn btn-large" type="submit">Register for someone else</button>
