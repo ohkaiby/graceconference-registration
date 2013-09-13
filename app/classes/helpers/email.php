@@ -27,7 +27,7 @@ class Email {
 		foreach( $email_params as $email ) {
 			$html = 'Dear '. $email[ 'first_name' ] .',';
 			$html .= '<p>This email is to confirm your registration for Grace Conference 2013. The total amount paid is $'. $email[ 'amount_paid' ] .'.</p>';
-			$html .= '<p>Note that this does not cover your stay at the Pheasant Run Resort. You&apos;ll need to register with PRR or a nearby hotel separately. Hotel registration discounts can be found at <a href="https://reservations.ihotelier.com/crs/g_reservation.cfm?groupID=794195&hotelID=2932">Pheasant Run at iHotelier</a>, <a href="http://www.ihg.com/holidayinnexpress/hotels/us/en/st.-charles/chisc/hoteldetail?groupCode=CCL">Holiday Inn Express</a>, and the <a href="http://cwp.marriott.com/chisc/gospelforchina/">Courtyard Mariott</a>.</p>';
+			$html .= '<p>Note that this does not cover your stay at the Pheasant Run Resort. You&apos;ll need to register with PRR or a nearby hotel separately. Hotel registration discounts can be found at <a href="https://reservations.ihotelier.com/crs/g_reservation.cfm?groupID=794195&hotelID=2932">Pheasant Run</a>, <a href="http://www.ihg.com/holidayinnexpress/hotels/us/en/st.-charles/chisc/hoteldetail?groupCode=CCL">Holiday Inn Express</a>, and the <a href="http://cwp.marriott.com/chisc/gospelforchina/">Courtyard Mariott</a>.</p>';
 			$html .= '<p>We look forward to seeing you!</p>';
 			$html .= '<br>Grace Conference 2013';
 
