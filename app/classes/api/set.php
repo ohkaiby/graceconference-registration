@@ -17,14 +17,19 @@ class Set {
 			return $this->attendeePayment( $post );
 		} elseif ( $key === 'reset_registration' ) {
 			return $this->resetRegistration();
+		} elseif ( $key === 'free_attendee_registration' ) {
+			return $this->freeAttendeeRegistration( $post );
 		}
 
-		return $this->formatDataToJSON( array( 'error' => 'key not recognized: ' . $key ) );
+		return $this->formatDataToJSON( array( 'status' => 'error', 'error' => 'key not recognized: ' . $key ) );
+	}
+
+	private function freeAttendeeRegistration( $post ) {
+		$Attendees = new \Helpers\Attendees;
+		return $this->formatDataToJSON( $Attendees->registerAttendees( $post[ 'value' ], true ) );
 	}
 
 	private function registerAttendee( $post ) {
-		global $f3;
-
 		$Attendees = new \Helpers\Attendees;
 		return $this->formatDataToJSON( $Attendees->registerAttendees( $post[ 'value' ] ) );
 	}

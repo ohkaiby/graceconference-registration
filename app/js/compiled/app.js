@@ -1032,7 +1032,7 @@
 
 		setRegistrationCost : function() {
 			var dateCutoffs = {
-					early : ( new Date( 'Sun Sep 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
+					early : ( new Date( 'Sun Sep 30 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
 					regular : ( new Date( 'Fri Nov 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
 					late : ( new Date( 'Tue Dec 10 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime()
 				},
@@ -1094,7 +1094,7 @@
 		},
 
 		resetCosts : function() {
-			this.set( { cost_from_breakfast : 0, cost_from_lunch : 0, cost_from_dinner : 0, total_cost : 0 } );
+			this.set( { cost_from_breakfast : 0, cost_from_lunch : 0, cost_from_dinner : 0, total_cost : this.attributes.registration_cost } );
 		}
 	};
 
@@ -1109,11 +1109,16 @@
 		},
 
 		render : function() {
-			this.$el.empty().append( gc.template( 'payment', this.generatePaymentTemplateVars() ) );
+			var stache = this.generatePaymentTemplateVars();
+			this.$el.empty().append( gc.template( 'payment', stache ) );
 
 			if ( this.$el.parent().length === 0 ) {
 				this.$el.appendTo( '#view-container' );
 			}
+
+			// if ( stache.total_cost === 0 ) {
+			// 	this.proceedToCompletionWithFreeAttendees();
+			// }
 		},
 
 		generatePaymentTemplateVars : function() {
@@ -1161,22 +1166,37 @@
 			return stache;
 		},
 
+		proceedToCompletionWithFreeAttendees : function() {
+			var self = this;
+
+			this.$el.addClass( 'payment-processing' );
+
+			$.ajax( '/api/set/free_attendee_registration/', {
+				data : {
+					value : this.prepareAttendeeAjaxInfo()
+				},
+				timeout : 10000,
+				type : 'POST'
+			} ).
+			done( function( response ) {
+				if ( response.status !== 'success' ) {
+					self.submissionError();
+					return;
+				}
+
+				gc.app.completionView.render();
+			} ).
+			fail( this.submissionError );
+
+			return false;
+		},
+
 		proceedWithPayment : function() {
-			var attendeeInfo = [],
-				i;
-
-			for ( i = 0; i < gc.app.attendeeCollection.length; i++ ) {
-				attendeeInfo.push( {
-					answers : gc.app.attendeeCollection.models[ i ].answerCollection.toJSON(),
-					payment : gc.app.attendeeCollection.models[ i ].paymentModel.toJSON()
-				} );
-			}
-
 			this.$el.addClass( 'payment-processing' );
 
 			$.ajax( '/api/set/attendee_registration/', {
 				data : {
-					value : attendeeInfo
+					value : this.prepareAttendeeAjaxInfo()
 				},
 				timeout : 10000,
 				type : 'POST'
@@ -1187,6 +1207,20 @@
 			gc.app.paymentProcessingModel.paymentWindow = window.open();
 
 			return false;
+		},
+
+		prepareAttendeeAjaxInfo : function() {
+			var attendeeInfo = [],
+				i;
+
+			for ( i = 0; i < gc.app.attendeeCollection.length; i++ ) {
+				attendeeInfo.push( {
+					answers : gc.app.attendeeCollection.models[ i ].answerCollection.toJSON(),
+					payment : gc.app.attendeeCollection.models[ i ].paymentModel.toJSON()
+				} );
+			}
+
+			return attendeeInfo;
 		},
 
 		openPayment : function( response ) {
@@ -1243,9 +1277,8 @@
 			if ( response.paid ) {
 				this.stopPolling();
 				gc.app.completionView.render();
-			} /*else {
-				gc.app.formView.render();
-			}*/
+				gc.app.paymentProcessingModel.paymentWindow && gc.app.paymentProcessingModel.paymentWindow.close && gc.app.paymentProcessingModel.paymentWindow.close();
+			}
 		},
 
 		ajaxPoll : function( invoice ) {

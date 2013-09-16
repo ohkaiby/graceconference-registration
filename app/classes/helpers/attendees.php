@@ -11,7 +11,7 @@ class Attendees {
 		$this->db = $f3->get( 'db' );
 	}
 
-	public function registerAttendees( $attendees ) {
+	public function registerAttendees( $attendees, $freeAttendee = false ) {
 		global $f3;
 
 		$ids_affected = array();
@@ -30,32 +30,51 @@ class Attendees {
 		$f3->set( 'SESSION.attendees', $attendees );
 
 		$this->db->begin();
+
+		$field_names = array( 'first_name', 'last_name', 'email', 'age', 'exact_age', 'gender', 'grade', 'status', 'undergrad_year', 'phone', 'phone_is_mobile', 'address', 'city', 'state', 'zip', 'meal_plan', 'ip_address', 'calculated_payment' );
+		if ( $freeAttendee ) {
+			$field_names[] = 'paid';
+			$field_names[] = 'payment_date';
+			$field_names[] = 'amount_paid';
+		}
+
+		$questions_marks = array();
+		for ( $i = 0; $i < count( $field_names ); $i++ ) {
+			$questions_marks[] = '?';
+		}
+		$questions_marks = implode( ', ', $questions_marks );
+
 		foreach ( $attendees as $attendee ) {
 			$attendee_sql_fields = $this->prepareAttendeeFieldsForInsertion( $attendee );
-
-			$result = $this->db->exec( 'INSERT INTO attendees
-				(first_name, last_name, email, age, exact_age, gender, grade, status, undergrad_year, phone, phone_is_mobile, address, city, state, zip, meal_plan, ip_address, calculated_payment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-				array(
-					1 => $attendee_sql_fields[ 'first_name' ],
-					2 => $attendee_sql_fields[ 'last_name' ],
-					3 => $attendee_sql_fields[ 'email' ],
-					4 => $attendee_sql_fields[ 'age' ],
-					5 => $attendee_sql_fields[ 'exact_age' ],
-					6 => $attendee_sql_fields[ 'gender' ],
-					7 => $attendee_sql_fields[ 'grade' ],
-					8 => $attendee_sql_fields[ 'status' ],
-					9 => $attendee_sql_fields[ 'undergrad_year' ],
-					10 => $attendee_sql_fields[ 'phone' ],
-					11 => $attendee_sql_fields[ 'phone_is_mobile' ],
-					12 => $attendee_sql_fields[ 'address' ],
-					13 => $attendee_sql_fields[ 'city' ],
-					14 => $attendee_sql_fields[ 'state' ],
-					15 => $attendee_sql_fields[ 'zip' ],
-					16 => $attendee_sql_fields[ 'meal_plan' ],
-					17 => $f3->get( 'IP' ),
-					18 => $attendee_sql_fields[ 'calculated_payment' ]
-				)
+			$field_values = array(
+				1 => $attendee_sql_fields[ 'first_name' ],
+				2 => $attendee_sql_fields[ 'last_name' ],
+				3 => $attendee_sql_fields[ 'email' ],
+				4 => $attendee_sql_fields[ 'age' ],
+				5 => $attendee_sql_fields[ 'exact_age' ],
+				6 => $attendee_sql_fields[ 'gender' ],
+				7 => $attendee_sql_fields[ 'grade' ],
+				8 => $attendee_sql_fields[ 'status' ],
+				9 => $attendee_sql_fields[ 'undergrad_year' ],
+				10 => $attendee_sql_fields[ 'phone' ],
+				11 => $attendee_sql_fields[ 'phone_is_mobile' ],
+				12 => $attendee_sql_fields[ 'address' ],
+				13 => $attendee_sql_fields[ 'city' ],
+				14 => $attendee_sql_fields[ 'state' ],
+				15 => $attendee_sql_fields[ 'zip' ],
+				16 => $attendee_sql_fields[ 'meal_plan' ],
+				17 => $f3->get( 'IP' ),
+				18 => $attendee_sql_fields[ 'calculated_payment' ]
 			);
+
+			if ( $freeAttendee ) {
+				$field_values[ 19 ] = 1; // paid
+				$field_values[ 20 ] = date( 'Y-m-d H:i:s' ); // payment date
+				$field_values[ 21 ] = 0; // amount_paid
+			}
+
+			$query = 'INSERT INTO attendees ('. implode( ', ', $field_names ) .') VALUES ('. $questions_marks .');';
+			$result = $this->db->exec( $query, $field_values );
 
 			if ( $result === 1 ) {
 				array_push( $ids_affected, $this->db->lastInsertId() );
