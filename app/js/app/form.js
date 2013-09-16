@@ -1036,7 +1036,7 @@
 					regular : ( new Date( 'Fri Nov 15 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime(),
 					late : ( new Date( 'Tue Dec 10 2013 23:59:59 GMT-0500 (CDT)' ) ).getTime()
 				},
-				now = Date.now(),
+				now = ( new Date() ).getTime(), // Date.now not supported in IE8
 				cost;
 
 			if ( this.attendeeModel.answerCollection.findWhere( { field : 'age' } ).attributes.value === '11' ) {
