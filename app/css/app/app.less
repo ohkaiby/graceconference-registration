@@ -43,11 +43,21 @@ p { margin-bottom: 20px; }
 	width: 498px;
 	height: 250px;
 	max-width: 100%;
-
-	.hide-text();
+	position: relative;
 
 	background: url("/app/img/logo-registration.png") no-repeat scroll left top;
 	background-size: contain;
+}
+.logo-text { .hide-text(); }
+.logo-date {
+	position: absolute;
+	top: 118px;
+	left: 264px;
+	color: @logo-text-color;
+	font-size: @larger-font-size;
+	font-weight: @buff;
+	letter-spacing: 2px;
+	text-transform: uppercase;
 }
 
 .title,
