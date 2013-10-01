@@ -92,10 +92,11 @@ class Attendees {
 			$f3->set( 'SESSION.invoice', $payment_invoice );
 
 			foreach ( $ids_affected as $id ) { // why the "IN" clause doesn't work, I don't know.
-				$this->db->exec( 'UPDATE attendees set paypal_invoice = ? WHERE id = ?;',
+				$this->db->exec( 'UPDATE attendees SET paypal_invoice = ?, paypal_url = ? WHERE id = ?;',
 					array(
 						1 => $payment_invoice,
-						2 => $id
+						2 => $payment_url,
+						3 => $id
 					)
 				);
 			}
