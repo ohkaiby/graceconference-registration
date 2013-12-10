@@ -1,5 +1,9 @@
 <?php
 
+// registration closed!
+header( 'Location: http://graceconference.org/' );
+exit;
+
 // setup
 $f3 = require( 'app/f3/lib/base.php' );
 $config = require( 'config.php' );
